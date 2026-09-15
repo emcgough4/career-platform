@@ -76,16 +76,13 @@ The initial launch does not include extra product surfaces beyond that set.
 4. Each project has a detail page that includes a richer narrative, context, outcomes, and supporting media or links.
 5. The about page contains the personal bio and profile information.
 6. The contact page provides direct outreach options.
-7. The site supports responsive layouts suitable for desktop and mobile browsing.
+7. The site must be accessible and readable on both desktop and mobile devices.
 
-### 7.2 Admin capabilities
-1. The user can create, edit, and delete profile sections.
-2. The user can create, edit, and delete experience entries.
-3. The user can create, edit, and delete projects.
-4. The user can create, edit, and delete education entries.
-5. The user can update contact information and social links.
-6. The user can publish or unpublish portfolio items as needed.
-7. The user can manage content from an authenticated admin interface without touching source files.
+### 7.2 Content management approach
+1. Content updates are handled through SQL statements and database changes rather than a built-in CRUD admin interface.
+2. The site does not require an application-level editing dashboard for launch.
+3. The database remains the source of truth for profile, experience, education, skills, and project data.
+4. Published or unpublished project state can be managed through boolean flags or explicit SQL updates as needed.
 
 ### 7.3 Data integrity and consistency
 1. Resume and portfolio content must be sourced from the same structured data model.
@@ -216,24 +213,20 @@ The public site should feel:
 ## 11. Technical Architecture
 
 ### 11.1 Application structure
-The recommended implementation architecture for this project is a single application with three core parts:
+The recommended implementation architecture for this project is a single application with two core parts:
 
 1. Public frontend
    - reads from the database
    - renders pages for resume and portfolio content
    - supports public browsing and responsive layouts
 
-2. Admin interface
-   - authenticated editing experience
-   - CRUD operations for core content entities
-   - straightforward publishing workflow
-
-3. Database layer
+2. Database layer
    - relational database as the canonical source of truth
    - normalized content structure for profile, experience, skills, education, and projects
+   - content changes are made through SQL and database updates rather than a built-in app CRUD interface
 
 ### 11.2 Data flow
-- Admin writes content to the database
+- Content is maintained directly in the database with SQL-based updates
 - Public frontend queries the database for page rendering
 - Each public page fetches only the relevant content subset needed for that view
 - Project detail pages fetch the project record and any associated metadata or narrative blocks
