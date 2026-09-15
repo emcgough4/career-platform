@@ -89,6 +89,12 @@ The initial launch does not include extra product surfaces beyond that set.
 2. Object relationships should reflect real-world associations (for example, project tags, skills, and experience dates).
 3. The database should support future extension without reworking the entire schema.
 
+### 7.4 Resilience and fallback behavior
+1. The public profile must remain visible even when the database is unavailable.
+2. The system should use a lightweight fallback representation, such as a cached or static snapshot of the latest published profile content.
+3. The fallback must preserve the critical public pages (about, resume, portfolio overview, and contact) so the site does not go blank during outages.
+4. This fallback is a temporary read-only view and not the primary editing mechanism.
+
 ## 8. Content Model
 
 The system uses a canonical relational data model with these main entities.
