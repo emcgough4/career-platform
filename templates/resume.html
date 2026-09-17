@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Resume · {{ profile.full_name }}{% endblock %}
+{% block content %}
+<section class="page-heading"><p class="eyebrow">Resume</p><h1>{{ profile.headline }}</h1><p class="lead">{{ profile.summary }}</p></section>
+<section class="content-section"><h2>Experience</h2>{% for item in experience %}<article class="timeline-item"><h3>{{ item.role_title }} · {{ item.company_name }}</h3><p class="muted">{{ item.start_date }} – {{ "Present" if item.is_current else item.end_date }}</p><p>{{ item.description }}</p>{% if item.achievement_summary %}<p><strong>Impact:</strong> {{ item.achievement_summary }}</p>{% endif %}</article>{% else %}<p>No experience entries published yet.</p>{% endfor %}</section>
+<section class="content-section"><h2>Skills</h2><div class="tag-list">{% for skill in skills %}<span class="tag">{{ skill.name }}</span>{% else %}<p>No skills published yet.</p>{% endfor %}</div></section>
+<section class="content-section"><h2>Education</h2>{% for item in education %}<article class="timeline-item"><h3>{{ item.degree }}{% if item.field_of_study %}, {{ item.field_of_study }}{% endif %}</h3><p>{{ item.institution_name }}</p><p>{{ item.details or "" }}</p></article>{% else %}<p>No education entries published yet.</p>{% endfor %}</section>
+{% endblock %}

@@ -1,0 +1,28 @@
+:root { color-scheme: light; --ink: #17202a; --muted: #5e6b78; --accent: #176b87; --paper: #f7f5f0; --line: #d9d6ce; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 system-ui, sans-serif; }
+a { color: var(--accent); }
+.container { width: min(100% - 2rem, 70rem); margin-inline: auto; }
+.site-header { border-bottom: 1px solid var(--line); background: rgba(247,245,240,.95); }
+.site-nav { display: flex; justify-content: space-between; gap: 1rem; padding: 1.25rem 0; align-items: center; }
+.brand { color: var(--ink); font-weight: 700; text-decoration: none; }
+.nav-links, .social-links, .button-row { display: flex; flex-wrap: wrap; gap: 1rem; }
+.nav-links a { color: var(--ink); text-decoration: none; }
+main { padding-block: 4rem; }
+.hero, .page-heading { max-width: 48rem; padding-block: 3rem; }
+h1, h2, h3 { line-height: 1.15; }
+h1 { font-size: clamp(2.5rem, 7vw, 5rem); margin: .25rem 0 1rem; }
+h2 { margin-top: 0; }
+.headline, .lead { color: var(--muted); font-size: clamp(1.15rem, 2vw, 1.5rem); }
+.eyebrow { color: var(--accent); font-size: .8rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.button { display: inline-block; background: var(--accent); color: #fff; padding: .7rem 1rem; text-decoration: none; border-radius: .25rem; }
+.button.secondary { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+.content-section { border-top: 1px solid var(--line); margin-top: 3rem; padding-top: 2rem; }
+.timeline-item { border-left: 2px solid var(--accent); margin: 1.5rem 0; padding-left: 1rem; }
+.muted { color: var(--muted); }
+.tag-list { display: flex; flex-wrap: wrap; gap: .5rem; }
+.tag { border: 1px solid var(--line); border-radius: 99px; padding: .2rem .65rem; }
+.project-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.project-card { border: 1px solid var(--line); padding: 1.5rem; background: #fff; }
+.fallback-banner { background: #fff1c7; color: #5b4300; padding: .5rem 1rem; text-align: center; }
+@media (max-width: 640px) { .site-nav { align-items: flex-start; flex-direction: column; } .nav-links { gap: .75rem; } main { padding-block: 2rem; } .project-grid { grid-template-columns: 1fr; } }
