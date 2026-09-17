@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Contact · {{ profile.full_name }}{% endblock %}
+{% block content %}
+<section class="hero"><p class="eyebrow">Contact</p><h1>Let’s connect.</h1><p class="lead">For recruiting and professional opportunities, reach out directly.</p>{% if profile.email %}<p><a class="button" href="mailto:{{ profile.email }}">{{ profile.email }}</a></p>{% endif %}<div class="social-links">{% if profile.linkedin_url %}<a href="{{ profile.linkedin_url }}">LinkedIn</a>{% endif %}{% if profile.github_url %}<a href="{{ profile.github_url }}">GitHub</a>{% endif %}</div></section>
+{% endblock %}

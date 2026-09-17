@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ profile.full_name if profile else "Career Platform" }}{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="container site-nav" aria-label="Primary navigation">
+      <a class="brand" href="/about">{{ profile.full_name if profile else "Profile" }}</a>
+      <div class="nav-links">
+        <a href="/about">About</a>
+        <a href="/resume">Resume</a>
+        <a href="/portfolio">Portfolio</a>
+        <a href="/contact">Contact</a>
+      </div>
+    </nav>
+  </header>
+  {% if fallback %}<div class="fallback-banner">Showing the latest saved profile snapshot.</div>{% endif %}
+  <main class="container">{% block content %}{% endblock %}</main>
+</body>
+</html>

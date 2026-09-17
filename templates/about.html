@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}About · {{ profile.full_name }}{% endblock %}
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">About</p>
+  <h1>{{ profile.full_name }}</h1>
+  <p class="headline">{{ profile.headline }}</p>
+  <p class="lead">{{ profile.summary }}</p>
+  {% if profile.location %}<p>{{ profile.location }}</p>{% endif %}
+  <a class="button" href="/contact">Let’s connect</a>
+</section>
+{% endblock %}

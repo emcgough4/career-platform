@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ project.title }} · {{ profile.full_name }}{% endblock %}
+{% block content %}
+<article class="case-study">
+  <p class="eyebrow">Case study</p><h1>{{ project.title }}</h1><p class="lead">{{ project.short_description }}</p>
+  {% for label, value in [("Overview", project.long_description), ("Challenge", project.challenge), ("Approach", project.approach), ("Process", project.process), ("Outcome", project.outcome), ("Metrics", project.metrics)] %}{% if value %}<section class="content-section"><h2>{{ label }}</h2><p>{{ value }}</p></section>{% endif %}{% endfor %}
+  <div class="button-row">{% if project.project_url %}<a class="button" href="{{ project.project_url }}">View project</a>{% endif %}{% if project.repository_url %}<a class="button secondary" href="{{ project.repository_url }}">View repository</a>{% endif %}</div>
+</article>
+{% endblock %}

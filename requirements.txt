@@ -1,0 +1,7 @@
+alembic
+fastapi
+jinja2
+pydantic
+pytest
+sqlalchemy
+uvicorn[standard]

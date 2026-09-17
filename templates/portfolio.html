@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Portfolio · {{ profile.full_name }}{% endblock %}
+{% block content %}
+<section class="page-heading"><p class="eyebrow">Selected work</p><h1>Portfolio</h1><p class="lead">A selection of creative and strategic work.</p></section>
+<section class="project-grid">{% for project in projects %}<article class="project-card"><p class="eyebrow">{{ project.year or "Project" }}</p><h2>{{ project.title }}</h2><p>{{ project.short_description }}</p><div class="tag-list">{% for tag in project.tags %}<span class="tag">{{ tag }}</span>{% endfor %}</div><a href="/projects/{{ project.id }}">View project <span aria-hidden="true">→</span></a></article>{% else %}<p>No projects published yet.</p>{% endfor %}</section>
+{% endblock %}
