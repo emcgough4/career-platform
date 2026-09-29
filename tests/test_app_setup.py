@@ -20,6 +20,15 @@ def test_root_route_renders_without_crashing():
     assert response.status_code == 200
 
 
+def test_root_route_redirects_to_about():
+    client = TestClient(app)
+
+    response = client.get("/", follow_redirects=False)
+
+    assert response.status_code == 307
+    assert response.headers["location"] == "/about"
+
+
 def test_database_engine_uses_sqlite_thread_compatible_settings():
     from app.db import engine
 

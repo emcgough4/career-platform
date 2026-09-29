@@ -1,8 +1,7 @@
 from fastapi import FastAPI
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.config import settings
 from app.routes.contact import router as contact_router
 from app.routes.portfolio import router as portfolio_router
 from app.routes.public import router as public_router
@@ -17,9 +16,9 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.get("/", response_class=PlainTextResponse)
-def root() -> str:
-    return f"{settings.app_name} is running"
+@app.get("/")
+def root() -> RedirectResponse:
+    return RedirectResponse(url="/about")
 
 
 app.include_router(public_router)
