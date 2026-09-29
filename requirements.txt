@@ -5,3 +5,4 @@ pydantic
 pytest
 sqlalchemy
 uvicorn[standard]
+httpx2
