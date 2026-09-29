@@ -218,3 +218,11 @@ __marimo__/
 .streamlit/secrets.toml
 
 .worktrees/
+
+# Local SQLite data (never commit; copied to servers with scp)
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+# empty DB created at repo root by test runs / default DATABASE_URL
+/career_platform.db
