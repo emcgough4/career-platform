@@ -431,6 +431,19 @@ The site answers on the VM and shows your data.
 > - VM: pulled `0546382` and restarted on `0.0.0.0:8000` (PID 41065, matching `uvicorn.pid`; `.env` loaded). `/` gives `307` to `/about`, and following it shows `<h1>Your Name</h1>`. It also works through the tunnel.
 > - Undo: `git revert 0546382 && git push origin main`, then pull on the VM and restart.
 
+> **2026-09-29: placeholder profile replaced with the user's resume content** (Data Steps 3–5 re-run as described in the Data section's "Later" note). The user approved the proposed changes first.
+> - Laptop DB: backed up to the workspace as `career_platform.db.pre-resume.bak`, then one transaction ran from a SQL file kept **outside the repo** (so the personal data isn't committed). It updated profile row 1 (name, headline, summary, location, email, LinkedIn); replaced the 3 demo skills with 12; and added 2 experience rows (bullets copied word for word) and 2 education rows. **Projects are left empty at the user's request.** Resume start dates are years only, so they are stored as Jan 1 and display as `YYYY-01-01`.
+> - VM: stopped uvicorn, then `mv data/career_platform.db data/career_platform.db.pre-resume.bak` (Step 4's guard needs the path free). Copied the new DB; sha256 `580f1f36…290572` matches the laptop. Integrity `ok`, `0001_core_schema`, profiles 1 (`Eleanor McGough`), experiences 2, education 2, skills 12. Restarted on `0.0.0.0:8000`; `uvicorn.pid` matches the listener and `.env` loaded.
+> - Verified: `/about`, `/resume`, `/contact` and `/portfolio` all return 200 with banner 0. The name, both roles, both degrees, the skills, the email and LinkedIn render. Portfolio shows "No projects published yet." There is no stray root DB, and the log has no errors.
+> - Not changed: `data/public_profile_snapshot.json` (the committed fallback) still has the placeholder.
+> - Undo: stop uvicorn, then on the VM `mv data/career_platform.db.pre-resume.bak data/career_platform.db` and restart; on the laptop, restore the workspace backup.
+
+> **2026-09-29: Exercise 03 screenshot and firewall changes.**
+> - The user added `Temp-HTTP-8000` (port 8000, source `*`) for the ex03 two-lock screenshot. The site was reachable publicly (200), and the user took the screenshot. The rule was then **deleted**: the public request to `:8000` timed out, and uvicorn was still on `0.0.0.0:8000` with `/health` `ok` over SSH.
+> - After the delete, **SSH timed out because the laptop's public IP had changed** (different network); this is the Review Focus risk. At the user's request, added `AllowSSHFromHome` (priority 1010, port 22, source = the home IP `/32`). The existing `AllowSSHFromLaptop` (1000) and the user-created `Allow-SSH-Laptop` (300, duplicate) were kept for the other network.
+> - Undo: `az network nsg rule delete -g rg-career-platform --nsg-name vm-career-platformNSG -n AllowSSHFromHome`.
+> - The first screenshot was never saved to disk, so `Temp-HTTP-8000` was **re-created** (at the user's request: priority 310, port 8000, source `*`; the public request returned 200). The user retook and saved the screenshot, and the rule was **deleted again**: the public request to `:8000` timed out, and `/health` over SSH is still `ok`. The evidence was committed as `8bfbcbe` (`docs/evidence/ex03.md` and `ex03-site.png`).
+
 ## Full rollback (reverse order)
 
 1. VM: `kill "$(cat ~/career-platform/uvicorn.pid)"` (the PID file holds uvicorn's listening PID, as set in Processes Step 1)
