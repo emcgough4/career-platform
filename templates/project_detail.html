@@ -1,9 +1,29 @@
 {% extends "base.html" %}
 {% block title %}{{ project.title }} · {{ profile.full_name }}{% endblock %}
 {% block content %}
-<article class="case-study">
-  <p class="eyebrow">Case study</p><h1>{{ project.title }}</h1><p class="lead">{{ project.short_description }}</p>
-  {% for label, value in [("Overview", project.long_description), ("Challenge", project.challenge), ("Approach", project.approach), ("Process", project.process), ("Outcome", project.outcome), ("Metrics", project.metrics)] %}{% if value %}<section class="content-section"><h2>{{ label }}</h2><p>{{ value }}</p></section>{% endif %}{% endfor %}
-  <div class="button-row">{% if project.project_url %}<a class="button" href="{{ project.project_url }}">View project</a>{% endif %}{% if project.repository_url %}<a class="button secondary" href="{{ project.repository_url }}">View repository</a>{% endif %}</div>
+<section class="band band--field page-head" aria-labelledby="page-title">
+  <div class="container">
+    <p class="crumb"><a href="/portfolio">Back to portfolio</a></p>
+    <h1 id="page-title" class="display display--lg">{{ project.title }}</h1>
+    {% if project.short_description %}<p class="strap"><span>{{ project.short_description }}</span></p>{% endif %}
+  </div>
+</section>
+
+<article class="container case-study">
+  {% if project.cover_image_url %}
+  <figure class="frame frame--inline"><img class="frame-photo" src="{{ project.cover_image_url }}" alt="" width="540" height="960"></figure>
+  {% endif %}
+  <div class="case-body">
+    {% for label, value in [("Overview", project.long_description), ("Challenge", project.challenge), ("Approach", project.approach), ("Process", project.process), ("Outcome", project.outcome), ("Metrics", project.metrics)] %}
+    {% if value %}<section class="case-section"><h2 class="section-title">{{ label }}</h2><p>{{ value }}</p></section>{% endif %}
+    {% endfor %}
+    {% if project.tags %}<p class="project-tags">{{ project.tags|join(" · ") }}</p>{% endif %}
+    {% if project.project_url or project.repository_url %}
+    <div class="actions">
+      {% if project.project_url %}<a class="button button--solid" href="{{ project.project_url }}" rel="noopener">View the project</a>{% endif %}
+      {% if project.repository_url %}<a class="button button--outline" href="{{ project.repository_url }}" rel="noopener">View the source</a>{% endif %}
+    </div>
+    {% endif %}
+  </div>
 </article>
 {% endblock %}

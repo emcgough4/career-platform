@@ -1,8 +1,82 @@
 {% extends "base.html" %}
 {% block title %}Resume · {{ profile.full_name }}{% endblock %}
 {% block content %}
-<section class="page-heading"><p class="eyebrow">Resume</p><h1>{{ profile.headline }}</h1><p class="lead">{{ profile.summary }}</p></section>
-<section class="content-section"><h2>Experience</h2>{% for item in experience %}<article class="timeline-item"><h3>{{ item.role_title }} · {{ item.company_name }}</h3><p class="muted">{{ item.start_date }} – {{ "Present" if item.is_current else item.end_date }}</p><p>{{ item.description }}</p>{% if item.achievement_summary %}<p><strong>Impact:</strong> {{ item.achievement_summary }}</p>{% endif %}</article>{% else %}<p>No experience entries published yet.</p>{% endfor %}</section>
-<section class="content-section"><h2>Skills</h2><div class="tag-list">{% for skill in skills %}<span class="tag">{{ skill.name }}</span>{% else %}<p>No skills published yet.</p>{% endfor %}</div></section>
-<section class="content-section"><h2>Education</h2>{% for item in education %}<article class="timeline-item"><h3>{{ item.degree }}{% if item.field_of_study %}, {{ item.field_of_study }}{% endif %}</h3><p>{{ item.institution_name }}</p><p>{{ item.details or "" }}</p></article>{% else %}<p>No education entries published yet.</p>{% endfor %}</section>
+<section class="band band--field page-head" aria-labelledby="page-title">
+  <div class="container page-head-inner">
+    <div>
+      <h1 id="page-title" class="display display--lg">Resume</h1>
+      <p class="strap"><span>{{ profile.full_name }}</span>{% if profile.headline %}{% for part in profile.headline.split(" · ") %}<br><span>{{ part }}</span>{% endfor %}{% endif %}</p>
+    </div>
+    <button class="button button--ghost print-button" type="button" data-print hidden>Save as PDF</button>
+  </div>
+</section>
+
+<div class="container resume">
+  <section class="resume-section" aria-labelledby="experience-heading">
+    <h2 id="experience-heading" class="section-title">Experience</h2>
+    {% for item in experience %}
+    <article class="entry">
+      <p class="entry-when">
+        {{ item.start_date|month_year }} – {{ "Present" if item.is_current else (item.end_date|month_year) }}
+        {% if item.location %}<span class="entry-where">{{ item.location }}</span>{% endif %}
+      </p>
+      <div class="entry-body">
+        <h3 class="entry-title">{{ item.role_title }}</h3>
+        <p class="entry-org">{{ item.company_name }}</p>
+        {% if item.achievement_summary %}<p class="entry-impact"><span>Impact</span> {{ item.achievement_summary }}</p>{% endif %}
+        {% set points = item.description|sentences %}
+        {% if points %}<ul class="entry-points">{% for point in points %}<li>{{ point }}</li>{% endfor %}</ul>{% endif %}
+        {% if item.skills_used %}<p class="entry-tools">{{ item.skills_used }}</p>{% endif %}
+      </div>
+    </article>
+    {% else %}
+    <p class="empty">No experience entries published yet.</p>
+    {% endfor %}
+  </section>
+
+  <section class="resume-section" aria-labelledby="education-heading">
+    <h2 id="education-heading" class="section-title">Education</h2>
+    {% for group in education|groupby("institution_name") %}
+    <article class="entry">
+      {% set grad = group.list|map(attribute="end_date")|select|max %}
+      <p class="entry-when">{% if grad %}{{ grad|month_year }}{% endif %}</p>
+      <div class="entry-body">
+        <h3 class="entry-title">{{ group.grouper }}</h3>
+        {% for item in group.list %}
+        <p class="entry-org">{{ item.degree }}{% if item.field_of_study %}, {{ item.field_of_study }}{% endif %}</p>
+        {% if item.details %}<p class="entry-detail">{{ item.details }}</p>{% endif %}
+        {% endfor %}
+      </div>
+    </article>
+    {% else %}
+    <p class="empty">No education entries published yet.</p>
+    {% endfor %}
+  </section>
+
+  <section class="resume-section" aria-labelledby="skills-heading">
+    <h2 id="skills-heading" class="section-title">Skills</h2>
+    {% if skills %}
+    <dl class="skill-groups">
+      {% for group in skills|groupby("category", default="Other") %}
+      <div class="skill-group">
+        <dt>{{ group.grouper }}</dt>
+        <dd>{{ group.list|map(attribute="name")|join(", ") }}</dd>
+      </div>
+      {% endfor %}
+    </dl>
+    {% else %}
+    <p class="empty">No skills published yet.</p>
+    {% endif %}
+  </section>
+</div>
+
+{% include "_contact_band.html" %}
+{% endblock %}
+{% block scripts %}
+<script>
+  document.querySelectorAll("[data-print]").forEach((button) => {
+    button.hidden = false;
+    button.addEventListener("click", () => window.print());
+  });
+</script>
 {% endblock %}

@@ -226,3 +226,7 @@ data/*.db-wal
 data/*.db-shm
 # empty DB created at repo root by test runs / default DATABASE_URL
 /career_platform.db
+
+# Impeccable local artifacts (regenerable)
+.impeccable/review/
+.impeccable/hook.cache.json

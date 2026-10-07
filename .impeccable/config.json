@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          "templates/base.html"
+        ],
+        "createdAt": "2026-10-07T04:57:49.716Z",
+        "reason": "model-verified: rendered-DOM check of all 5 pages found no ink text on cobalt; ink only sits on chartreuse strap or white backgrounds the static scan does not resolve"
+      }
+    ]
+  }
+}

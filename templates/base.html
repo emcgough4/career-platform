@@ -3,22 +3,46 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}{{ profile.full_name if profile else "Career Platform" }}{% endblock %}</title>
+  {% set site_name = profile.full_name if profile and profile.full_name else "Career Platform" %}
+  {% set page_description = (profile.summary if profile and profile.summary else "")|truncate(160, True, "…", 0) %}
+  <title>{% block title %}{{ site_name }}{% endblock %}</title>
+  {% if page_description %}<meta name="description" content="{{ page_description }}">{% endif %}
+  <meta property="og:type" content="profile">
+  <meta property="og:title" content="{{ self.title() }}">
+  {% if page_description %}<meta property="og:description" content="{{ page_description }}">{% endif %}
+  <meta property="og:site_name" content="{{ site_name }}">
+  <meta name="theme-color" content="#1d3fd8">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="/static/fonts/archivo-latin-standard-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/static/css/styles.css">
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
+  {% if fallback %}<!-- Showing the latest saved profile snapshot. -->{% endif %}
+  <a class="skip-link" href="#main">Skip to content</a>
+  {% set path = request.url.path %}
+  {% set show_portfolio = projects is not defined or projects %}
   <header class="site-header">
     <nav class="container site-nav" aria-label="Primary navigation">
-      <a class="brand" href="/about">{{ profile.full_name if profile else "Profile" }}</a>
-      <div class="nav-links">
-        <a href="/about">About</a>
-        <a href="/resume">Resume</a>
-        <a href="/portfolio">Portfolio</a>
-        <a href="/contact">Contact</a>
-      </div>
+      <a class="brand" href="/about">{{ profile.full_name if profile and profile.full_name else "Profile" }}</a>
+      <ul class="nav-links" role="list">
+        <li><a href="/about"{% if path in ("/", "/about") %} aria-current="page"{% endif %}>About</a></li>
+        <li><a href="/resume"{% if path == "/resume" %} aria-current="page"{% endif %}>Resume</a></li>
+        {% if show_portfolio %}<li><a href="/portfolio"{% if path == "/portfolio" or path.startswith("/projects/") %} aria-current="page"{% endif %}>Portfolio</a></li>{% endif %}
+        <li><a href="/contact"{% if path == "/contact" %} aria-current="page"{% endif %}>Contact</a></li>
+      </ul>
     </nav>
   </header>
-  {% if fallback %}<div class="fallback-banner">Showing the latest saved profile snapshot.</div>{% endif %}
-  <main class="container">{% block content %}{% endblock %}</main>
+  <main id="main" tabindex="-1">{% block content %}{% endblock %}</main>
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p class="footer-name">{{ profile.full_name if profile and profile.full_name else "" }}</p>
+      <ul class="footer-links" role="list">
+        {% if profile and profile.email %}<li><a href="mailto:{{ profile.email|lower }}">{{ profile.email|lower }}</a></li>{% endif %}
+        {% if profile and profile.linkedin_url %}<li><a href="{{ profile.linkedin_url }}" rel="noopener">LinkedIn</a></li>{% endif %}
+        {% if profile and profile.github_url %}<li><a href="{{ profile.github_url }}" rel="noopener">GitHub</a></li>{% endif %}
+      </ul>
+    </div>
+  </footer>
+  {% block scripts %}{% endblock %}
 </body>
 </html>
