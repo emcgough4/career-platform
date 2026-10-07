@@ -35,3 +35,24 @@ def test_fallback_marker_stays_greppable_but_hidden(client):
 def test_nav_marks_current_page(client):
     response = client.get("/resume")
     assert 'href="/resume" aria-current="page"' in response.text
+
+
+def test_is_video_detects_video_files():
+    from app.templating import is_video
+
+    assert is_video("/static/media/clip.MP4")
+    assert is_video("https://cdn.example.com/a.webm?x=1")
+    assert not is_video("/static/media/still.jpg")
+    assert not is_video(None)
+
+
+def test_embed_url_supports_youtube_tiktok_and_instagram():
+    from app.templating import embed_url
+
+    assert embed_url("https://youtu.be/abc123") == "https://www.youtube-nocookie.com/embed/abc123"
+    assert embed_url("https://www.youtube.com/watch?v=abc123") == "https://www.youtube-nocookie.com/embed/abc123"
+    assert embed_url("https://youtube.com/shorts/abc123") == "https://www.youtube-nocookie.com/embed/abc123"
+    assert embed_url("https://www.tiktok.com/@theloyolan/video/7300000000000000000") == "https://www.tiktok.com/embed/v2/7300000000000000000"
+    assert embed_url("https://www.instagram.com/reel/Cabc123/") == "https://www.instagram.com/reel/Cabc123/embed"
+    assert embed_url("https://example.com/post") == ""
+    assert embed_url(None) == ""

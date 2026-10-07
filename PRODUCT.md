@@ -38,6 +38,9 @@ She already produces the medium recruiters are hiring for: short-form vertical v
 ## Brand Commitments
 
 - Tone requested by the owner: creative first, but aesthetic and polished. Not chaotic.
+- 2026-10-07, after the first redesign was judged "not a clean work and is messy": the owner chose the **Bold creative** direction, where her work leads (large photo and video stills, big confident type, colour from her content rather than UI decoration), and asked that it be "engaging and interactive and really stand out for a creative marketing role".
+- 2026-10-07: the owner found near-black "too dark" and chose a deep **plum** ground from five rendered options (plum, teal, oxblood, forest, indigo).
+- Specific complaints to never repeat: too many fonts and sizes; repeated content (the same email, links or roles shown twice on one page).
 
 ## Evidence on Hand
 

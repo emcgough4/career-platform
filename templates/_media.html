@@ -1,0 +1,28 @@
+{% macro media(url, alt="", eager=false) -%}
+  {%- if url|is_video -%}
+  <video class="media" src="{{ url }}" muted loop playsinline preload="metadata" aria-hidden="true" tabindex="-1" data-preview></video>
+  {%- else -%}
+  <img class="media" src="{{ url }}" alt="{{ alt }}" width="540" height="960"{% if not eager %} loading="lazy"{% endif %}>
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro work_card(project) -%}
+<li class="card">
+  <a class="card-link" href="/projects/{{ project.id }}">
+    <span class="card-media">
+      {% if project.cover_image_url %}{{ media(project.cover_image_url) }}{% endif %}
+      {% if project.cover_image_url|is_video %}<span class="card-play" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></span>{% endif %}
+    </span>
+    <span class="card-title">{{ project.title }}</span>
+    {% if project.metrics %}<span class="card-meta">{{ project.metrics }}</span>{% elif project.year %}<span class="card-meta">{{ project.year }}</span>{% endif %}
+  </a>
+</li>
+{%- endmacro %}
+
+{% macro slot_card(number) -%}
+<li class="card card--slot" aria-hidden="true">
+  <span class="card-media"><span class="slot-label">Work {{ number }}<br>vertical clip or still</span></span>
+  <span class="card-title">Project title</span>
+  <span class="card-meta">Result, e.g. views</span>
+</li>
+{%- endmacro %}

@@ -11,7 +11,8 @@
   <meta property="og:title" content="{{ self.title() }}">
   {% if page_description %}<meta property="og:description" content="{{ page_description }}">{% endif %}
   <meta property="og:site_name" content="{{ site_name }}">
-  <meta name="theme-color" content="#1d3fd8">
+  {% if profile and profile.photo_url and not profile.photo_url|is_video %}<meta property="og:image" content="{{ profile.photo_url }}">{% endif %}
+  <meta name="theme-color" content="#2a1336">
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/static/fonts/archivo-latin-standard-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/static/css/styles.css">
@@ -20,29 +21,23 @@
   {% if fallback %}<!-- Showing the latest saved profile snapshot. -->{% endif %}
   <a class="skip-link" href="#main">Skip to content</a>
   {% set path = request.url.path %}
-  {% set show_portfolio = projects is not defined or projects %}
+  {% set show_work = projects is not defined or projects or preview_slots %}
   <header class="site-header">
-    <nav class="container site-nav" aria-label="Primary navigation">
-      <a class="brand" href="/about">{{ profile.full_name if profile and profile.full_name else "Profile" }}</a>
+    <nav class="wrap site-nav" aria-label="Primary navigation">
+      <a class="brand" href="/about"{% if path in ("/", "/about") %} aria-current="page"{% endif %}>{{ profile.full_name if profile and profile.full_name else "Profile" }}</a>
       <ul class="nav-links" role="list">
-        <li><a href="/about"{% if path in ("/", "/about") %} aria-current="page"{% endif %}>About</a></li>
+        {% if show_work %}<li><a href="/portfolio"{% if path == "/portfolio" or path.startswith("/projects/") %} aria-current="page"{% endif %}>Work</a></li>{% endif %}
         <li><a href="/resume"{% if path == "/resume" %} aria-current="page"{% endif %}>Resume</a></li>
-        {% if show_portfolio %}<li><a href="/portfolio"{% if path == "/portfolio" or path.startswith("/projects/") %} aria-current="page"{% endif %}>Portfolio</a></li>{% endif %}
         <li><a href="/contact"{% if path == "/contact" %} aria-current="page"{% endif %}>Contact</a></li>
       </ul>
     </nav>
   </header>
   <main id="main" tabindex="-1">{% block content %}{% endblock %}</main>
   <footer class="site-footer">
-    <div class="container footer-inner">
-      <p class="footer-name">{{ profile.full_name if profile and profile.full_name else "" }}</p>
-      <ul class="footer-links" role="list">
-        {% if profile and profile.email %}<li><a href="mailto:{{ profile.email|lower }}">{{ profile.email|lower }}</a></li>{% endif %}
-        {% if profile and profile.linkedin_url %}<li><a href="{{ profile.linkedin_url }}" rel="noopener">LinkedIn</a></li>{% endif %}
-        {% if profile and profile.github_url %}<li><a href="{{ profile.github_url }}" rel="noopener">GitHub</a></li>{% endif %}
-      </ul>
+    <div class="wrap footer-inner">
+      <a href="#main">Back to top</a>
     </div>
   </footer>
-  {% block scripts %}{% endblock %}
+  <script src="/static/js/site.js" defer></script>
 </body>
 </html>

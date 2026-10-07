@@ -1,27 +1,30 @@
 {% extends "base.html" %}
 {% block title %}{{ project.title }} · {{ profile.full_name }}{% endblock %}
 {% block content %}
-<section class="band band--field page-head" aria-labelledby="page-title">
-  <div class="container">
-    <p class="crumb"><a href="/portfolio">Back to portfolio</a></p>
-    <h1 id="page-title" class="display display--lg">{{ project.title }}</h1>
-    {% if project.short_description %}<p class="strap"><span>{{ project.short_description }}</span></p>{% endif %}
+{% set player = project.project_url|embed_url %}
+<article class="wrap case">
+  <div class="case-media">
+    {% if player %}
+    <iframe class="media" src="{{ player }}" title="{{ project.title }}" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+    {% elif project.cover_image_url|is_video %}
+    <video class="media" src="{{ project.cover_image_url }}" controls playsinline preload="metadata"></video>
+    {% elif project.cover_image_url %}
+    <img class="media" src="{{ project.cover_image_url }}" alt="" width="540" height="960">
+    {% endif %}
   </div>
-</section>
-
-<article class="container case-study">
-  {% if project.cover_image_url %}
-  <figure class="frame frame--inline"><img class="frame-photo" src="{{ project.cover_image_url }}" alt="" width="540" height="960"></figure>
-  {% endif %}
   <div class="case-body">
-    {% for label, value in [("Overview", project.long_description), ("Challenge", project.challenge), ("Approach", project.approach), ("Process", project.process), ("Outcome", project.outcome), ("Metrics", project.metrics)] %}
-    {% if value %}<section class="case-section"><h2 class="section-title">{{ label }}</h2><p>{{ value }}</p></section>{% endif %}
+    <p class="crumb"><a href="/portfolio">All work</a></p>
+    <h1 class="display display--section">{{ project.title }}</h1>
+    {% if project.short_description %}<p class="lead">{{ project.short_description }}</p>{% endif %}
+    {% if project.metrics %}<p class="case-metric">{{ project.metrics }}</p>{% endif %}
+    {% for label, value in [("Overview", project.long_description), ("Challenge", project.challenge), ("Approach", project.approach), ("Process", project.process), ("Outcome", project.outcome)] %}
+    {% if value %}<section class="case-section"><h2 class="title">{{ label }}</h2><p>{{ value }}</p></section>{% endif %}
     {% endfor %}
-    {% if project.tags %}<p class="project-tags">{{ project.tags|join(" · ") }}</p>{% endif %}
-    {% if project.project_url or project.repository_url %}
+    {% if project.tags %}<p class="meta">{{ project.tags|join(" · ") }}</p>{% endif %}
+    {% if (project.project_url and not player) or project.repository_url %}
     <div class="actions">
-      {% if project.project_url %}<a class="button button--solid" href="{{ project.project_url }}" rel="noopener">View the project</a>{% endif %}
-      {% if project.repository_url %}<a class="button button--outline" href="{{ project.repository_url }}" rel="noopener">View the source</a>{% endif %}
+      {% if project.project_url and not player %}<a class="button button--primary" href="{{ project.project_url }}" rel="noopener">View the project</a>{% endif %}
+      {% if project.repository_url %}<a class="button" href="{{ project.repository_url }}" rel="noopener">View the source</a>{% endif %}
     </div>
     {% endif %}
   </div>

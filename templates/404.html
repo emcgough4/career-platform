@@ -1,14 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Page not found · {{ profile.full_name if profile and profile.full_name else "Career Platform" }}{% endblock %}
 {% block content %}
-<section class="band band--field page-head" aria-labelledby="page-title">
-  <div class="container">
-    <h1 id="page-title" class="display display--lg">Off the air.</h1>
-    <p class="strap"><span>This page doesn’t exist or has moved.</span></p>
-    <div class="actions">
-      <a class="button button--strap" href="/about">Go to the homepage</a>
-      <a class="button button--ghost" href="/resume">Read the resume</a>
-    </div>
+<section class="wrap page-head" aria-labelledby="page-title">
+  <h1 id="page-title" class="display">Off the air.</h1>
+  <p class="lead">This page doesn’t exist or has moved.</p>
+  <div class="actions">
+    <a class="button button--primary" href="/about">Go to the homepage</a>
+    <a class="button" href="/resume">Read the resume</a>
   </div>
 </section>
 {% endblock %}

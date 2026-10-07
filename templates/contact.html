@@ -1,52 +1,23 @@
 {% extends "base.html" %}
 {% block title %}Contact · {{ profile.full_name }}{% endblock %}
-{% block body_class %}page-contact{% endblock %}
 {% block content %}
-<section class="band band--field contact" aria-labelledby="page-title">
-  <div class="container contact-inner">
-    <h1 id="page-title" class="display">Say hello.</h1>
-    <p class="hero-summary">For recruiting and professional opportunities, reach out directly.</p>
-    {% if profile.availability %}<p class="strap strap--lead"><span>{{ profile.availability }}</span></p>{% endif %}
+<section class="wrap contact" aria-labelledby="page-title">
+  <h1 id="page-title" class="display">Say hello.</h1>
+  <p class="lead">For recruiting and professional opportunities, reach out directly.</p>
+  {% if profile.availability %}<p class="lead">{{ profile.availability }}</p>{% endif %}
 
-    {% if profile.email %}
-    <div class="email-block">
-      <a class="email-address" href="mailto:{{ profile.email|lower }}">{{ profile.email|lower }}</a>
-      <div class="actions">
-        <a class="button button--strap" href="mailto:{{ profile.email|lower }}">Write an email</a>
-        <button class="button button--ghost" type="button" data-copy="{{ profile.email|lower }}" hidden>Copy address</button>
-        <span class="copy-status" role="status" aria-live="polite"></span>
-      </div>
-    </div>
-    {% endif %}
-
-    {% if profile.linkedin_url or profile.github_url %}
-    <ul class="contact-links" role="list">
-      {% if profile.linkedin_url %}<li><a class="button button--ghost" href="{{ profile.linkedin_url }}" rel="noopener">LinkedIn profile</a></li>{% endif %}
-      {% if profile.github_url %}<li><a class="button button--ghost" href="{{ profile.github_url }}" rel="noopener">GitHub</a></li>{% endif %}
-    </ul>
-    {% endif %}
-
-    {% if not profile.email and not profile.linkedin_url and not profile.github_url %}
-    <p class="hero-summary">Contact details will be posted here soon.</p>
-    {% endif %}
+  {% if profile.email %}
+  <a class="email-address" href="mailto:{{ profile.email|lower }}">{{ profile.email|lower }}</a>
+  {% endif %}
+  <div class="actions">
+    {% if profile.email %}<button class="button button--primary" type="button" data-copy="{{ profile.email|lower }}" hidden>Copy address</button>{% endif %}
+    {% if profile.linkedin_url %}<a class="button" href="{{ profile.linkedin_url }}" rel="noopener">LinkedIn</a>{% endif %}
+    {% if profile.github_url %}<a class="button" href="{{ profile.github_url }}" rel="noopener">GitHub</a>{% endif %}
+    <span class="copy-status meta" role="status" aria-live="polite"></span>
   </div>
+
+  {% if not profile.email and not profile.linkedin_url and not profile.github_url %}
+  <p class="lead">Contact details will be posted here soon.</p>
+  {% endif %}
 </section>
-{% endblock %}
-{% block scripts %}
-<script>
-  document.querySelectorAll("[data-copy]").forEach((button) => {
-    if (!navigator.clipboard) return;
-    const status = button.parentElement.querySelector(".copy-status");
-    button.hidden = false;
-    button.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(button.dataset.copy);
-        status.textContent = "Copied to clipboard";
-      } catch {
-        status.textContent = "Couldn’t copy. Select the address above instead.";
-      }
-      setTimeout(() => { status.textContent = ""; }, 4000);
-    });
-  });
-</script>
 {% endblock %}

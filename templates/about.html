@@ -1,67 +1,59 @@
 {% extends "base.html" %}
+{% from "_media.html" import media, work_card, slot_card %}
 {% block title %}About · {{ profile.full_name }}{% endblock %}
+{% block body_class %}page-home{% endblock %}
 {% block content %}
-{% set current_roles = experience|selectattr("is_current")|list %}
-<section class="band band--field hero" aria-labelledby="hero-name">
-  <div class="container hero-grid">
+{% set has_hero_media = profile.photo_url or preview_slots %}
+<section class="hero{% if has_hero_media %} hero--media{% endif %}" aria-labelledby="hero-name">
+  <div class="wrap hero-grid">
     <div class="hero-copy">
-      <h1 id="hero-name" class="display">{{ profile.full_name }}</h1>
-      {% if profile.headline %}<p class="strap strap--lead">{% for part in profile.headline.split(" · ") %}<span>{{ part }}</span>{% if not loop.last %}<br>{% endif %}{% endfor %}</p>{% endif %}
-      {% if profile.summary %}<p class="hero-summary">{{ profile.summary }}</p>{% endif %}
-      {% if profile.location or profile.availability %}
-      <p class="hero-meta">{{ profile.location or "" }}{% if profile.location and profile.availability %} · {% endif %}{{ profile.availability or "" }}</p>
-      {% endif %}
+      <h1 id="hero-name" class="display hero-name">{{ profile.full_name }}</h1>
+      {% if profile.headline %}<p class="hero-line">{{ profile.headline }}</p>{% endif %}
       <div class="actions">
-        {% if profile.email %}<a class="button button--strap" href="mailto:{{ profile.email|lower }}">Email me</a>{% else %}<a class="button button--strap" href="/contact">Get in touch</a>{% endif %}
-        <a class="button button--ghost" href="/resume">See the resume</a>
+        {% if profile.email %}<a class="button button--primary" href="mailto:{{ profile.email|lower }}">Email me</a>{% endif %}
+        {% if projects or preview_slots %}<a class="button" href="#work">See the work</a>{% else %}<a class="button" href="/resume">See the resume</a>{% endif %}
       </div>
     </div>
-    <figure class="frame" aria-label="{{ 'Photo of ' ~ profile.full_name if profile.photo_url else 'Current roles' }}">
-      {% if profile.photo_url %}
-      <img class="frame-photo" src="{{ profile.photo_url }}" alt="{{ profile.full_name }}" width="540" height="960">
-      {% endif %}
-      {% if current_roles %}
-      <ul class="frame-straps" role="list">
-        {% for item in current_roles %}
-        <li class="frame-strap" style="--i: {{ loop.index0 }}"><strong>{{ item.role_title }}</strong><span>{{ item.company_name }}</span></li>
-        {% endfor %}
-      </ul>
-      {% endif %}
-    </figure>
+    {% if profile.photo_url %}
+    <figure class="hero-media">{{ media(profile.photo_url, profile.full_name, eager=true) }}</figure>
+    {% elif preview_slots %}
+    <figure class="hero-media slot" aria-hidden="true"><span class="slot-label">Hero<br>photo of you or your best clip</span></figure>
+    {% endif %}
   </div>
 </section>
 
-{% if experience or education %}
-<section class="band now" aria-labelledby="now-heading">
-  <div class="container">
-    <h2 id="now-heading" class="section-title">Right now</h2>
-    <ul class="now-list" role="list">
-      {% for item in current_roles %}
-      <li class="now-item">
-        <p class="now-when">Since {{ item.start_date|month_year }}</p>
-        <div>
-          <h3 class="now-role">{{ item.role_title }}</h3>
-          <p class="now-org">{{ item.company_name }}</p>
-          {% set first = (item.description|sentences)|first %}{% if first %}<p class="now-detail">{{ first }}</p>{% endif %}
-        </div>
-      </li>
-      {% endfor %}
-      {% for group in education|groupby("institution_name") %}
-      <li class="now-item">
-        {% set grad = group.list|map(attribute="end_date")|select|max %}
-        <p class="now-when">{% if grad %}Graduating {{ grad|month_year }}{% else %}Studying{% endif %}</p>
-        <div>
-          <h3 class="now-role">{% for item in group.list %}{{ item.degree }}{% if item.field_of_study %}, {{ item.field_of_study }}{% endif %}{% if not loop.last %}<br>{% endif %}{% endfor %}</h3>
-          <p class="now-org">{{ group.grouper }}</p>
-          {% set honors = group.list|map(attribute="details")|select|first %}{% if honors %}<p class="now-detail">{{ honors }}</p>{% endif %}
-        </div>
-      </li>
-      {% endfor %}
-    </ul>
-    <p class="section-link"><a href="/resume">Full experience, skills and education</a></p>
+{% if projects or preview_slots %}
+<section class="reel-section" id="work" aria-labelledby="work-heading">
+  <div class="wrap reel-head">
+    <h2 id="work-heading" class="display display--section">Selected work</h2>
+    <div class="reel-controls" data-reel-controls hidden>
+      <button class="icon-button" type="button" data-reel-prev aria-label="Previous work"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+      <button class="icon-button" type="button" data-reel-next aria-label="Next work"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+    </div>
   </div>
+  <ul class="reel" role="list" data-reel tabindex="0" aria-label="Selected work, scroll sideways">
+    {% for project in projects %}{{ work_card(project) }}{% endfor %}
+    {% if preview_slots %}{% for n in range(projects|length + 1, 7) %}{{ slot_card(n) }}{% endfor %}{% endif %}
+  </ul>
 </section>
 {% endif %}
 
-{% include "_contact_band.html" %}
+{% set current_roles = experience|selectattr("is_current")|list %}
+<section class="wrap about" aria-labelledby="about-heading">
+  <h2 id="about-heading" class="display display--section">About</h2>
+  <div class="about-body">
+    {% if current_roles or education %}
+    <ul class="facts" role="list">
+      {% for item in current_roles %}
+      <li><span class="fact-what">{{ item.role_title }}, {{ item.company_name }}</span><span class="fact-when">Since {{ item.start_date|month_year }}</span></li>
+      {% endfor %}
+      {% for group in education|groupby("institution_name") %}
+      {% set grad = group.list|map(attribute="end_date")|select|max %}
+      <li><span class="fact-what">{{ group.grouper }}{% if group.list|length > 1 %}, double degree{% endif %}</span><span class="fact-when">{% if grad %}Class of {{ grad|month_year }}{% endif %}</span></li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% if projects or preview_slots %}<a class="text-link" href="/resume">Full resume</a>{% endif %}
+  </div>
+</section>
 {% endblock %}
