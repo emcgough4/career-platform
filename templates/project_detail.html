@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ project.title }} · {{ profile.full_name }}{% endblock %}
+{% from "_media.html" import topic_id %}
 {% block content %}
 {% set player = project.project_url|embed_url %}
 <article class="wrap case">
@@ -13,10 +14,10 @@
     {% endif %}
   </div>
   <div class="case-body">
-    <p class="crumb"><a href="/portfolio">All work</a></p>
+    <p class="crumb"><a href="/portfolio{% if project.category %}#{{ topic_id(project.category) }}{% endif %}">All work{% if project.category %}: {{ project.category }}{% endif %}</a></p>
     <h1 class="display display--section">{{ project.title }}</h1>
     {% if project.short_description %}<p class="lead">{{ project.short_description }}</p>{% endif %}
-    {% if project.metrics %}<p class="case-metric">{{ project.metrics }}</p>{% endif %}
+    {% if project.metrics %}<p class="note note--inline">{{ project.metrics }}</p>{% endif %}
     {% for label, value in [("Overview", project.long_description), ("Challenge", project.challenge), ("Approach", project.approach), ("Process", project.process), ("Outcome", project.outcome)] %}
     {% if value %}<section class="case-section"><h2 class="title">{{ label }}</h2><p>{{ value }}</p></section>{% endif %}
     {% endfor %}

@@ -40,6 +40,7 @@ def serialize_profile(profile: Profile | None) -> dict:
                     "id", "title", "short_description", "long_description", "challenge",
                     "approach", "process", "outcome", "metrics", "status", "featured",
                     "published_at", "cover_image_url", "project_url", "repository_url", "year",
+                    "category",
                 )
             }
             | {"tags": [tag.label for tag in item.tags]}

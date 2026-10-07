@@ -107,5 +107,6 @@ class Project(Base):
     project_url: Mapped[str | None] = mapped_column(String(500))
     repository_url: Mapped[str | None] = mapped_column(String(500))
     year: Mapped[int | None] = mapped_column(Integer)
+    category: Mapped[str | None] = mapped_column(String(100))
     profile: Mapped[Profile] = relationship(back_populates="projects")
     tags: Mapped[list[Tag]] = relationship(secondary=project_tags, back_populates="projects")

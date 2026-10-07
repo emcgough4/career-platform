@@ -25,14 +25,16 @@
 {% if projects or preview_slots %}
 <section class="reel-section" id="work" aria-labelledby="work-heading">
   <div class="wrap reel-head">
-    <h2 id="work-heading" class="display display--section">Selected work</h2>
+    <h2 id="work-heading" class="display display--section">selected work.</h2>
+    {% if projects %}<a class="text-link reel-all" href="/portfolio">All work by topic</a>{% endif %}
     <div class="reel-controls" data-reel-controls hidden>
       <button class="icon-button" type="button" data-reel-prev aria-label="Previous work"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
       <button class="icon-button" type="button" data-reel-next aria-label="Next work"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
     </div>
   </div>
   <ul class="reel" role="list" data-reel tabindex="0" aria-label="Selected work, scroll sideways">
-    {% for project in projects %}{{ work_card(project) }}{% endfor %}
+    {% set featured = projects|selectattr("featured")|list %}
+    {% for project in (featured or projects) %}{{ work_card(project) }}{% endfor %}
     {% if preview_slots %}{% for n in range(projects|length + 1, 7) %}{{ slot_card(n) }}{% endfor %}{% endif %}
   </ul>
 </section>
@@ -40,7 +42,7 @@
 
 {% set current_roles = experience|selectattr("is_current")|list %}
 <section class="wrap about" aria-labelledby="about-heading">
-  <h2 id="about-heading" class="display display--section">About</h2>
+  <h2 id="about-heading" class="display display--section">about.</h2>
   <div class="about-body">
     {% if current_roles or education %}
     <ul class="facts" role="list">

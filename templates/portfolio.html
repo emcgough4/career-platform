@@ -1,17 +1,35 @@
 {% extends "base.html" %}
-{% from "_media.html" import work_card, slot_card %}
+{% from "_media.html" import work_card, slot_card, topic_id %}
 {% block title %}Portfolio · {{ profile.full_name }}{% endblock %}
 {% block content %}
+{# Topics in the order their first project appears; uncategorised work collects under "more work". #}
+{% set topics = [] %}
+{% for project in projects %}{% set name = project.category or "more work" %}{% if name not in topics %}{% set _ = topics.append(name) %}{% endif %}{% endfor %}
+
 <section class="wrap page-head" aria-labelledby="page-title">
-  <h1 id="page-title" class="display">Work</h1>
+  <h1 id="page-title" class="display">work.</h1>
+  {% if topics|length > 1 %}
+  <nav class="topics" aria-label="Work by topic">
+    {% for name in topics %}
+    {% set count = projects|selectattr("category", "equalto", None if name == "more work" else name)|list|length %}
+    <a class="topic" href="#{{ topic_id(name) }}"><span class="topic-name">{{ name }}.</span><span class="topic-count">{{ count }} piece{{ "s" if count != 1 }}</span></a>
+    {% endfor %}
+  </nav>
+  {% endif %}
 </section>
 
 <div class="wrap">
-  {% if projects or preview_slots %}
-  <ul class="work-grid" role="list">
-    {% for project in projects %}{{ work_card(project) }}{% endfor %}
-    {% if preview_slots %}{% for n in range(projects|length + 1, 7) %}{{ slot_card(n) }}{% endfor %}{% endif %}
-  </ul>
+  {% if projects %}
+  {% for name in topics %}
+  <section class="topic-section" id="{{ topic_id(name) }}" aria-labelledby="{{ topic_id(name) }}-heading">
+    {% if topics|length > 1 %}<h2 id="{{ topic_id(name) }}-heading" class="display display--section">{{ name }}.</h2>{% endif %}
+    <ul class="work-grid" role="list">
+      {% for project in projects if (project.category or "more work") == name %}{{ work_card(project) }}{% endfor %}
+    </ul>
+  </section>
+  {% endfor %}
+  {% elif preview_slots %}
+  <ul class="work-grid" role="list">{% for n in range(1, 7) %}{{ slot_card(n) }}{% endfor %}</ul>
   {% else %}
   <div class="empty-state">
     <p class="lead">No case studies are published yet.</p>

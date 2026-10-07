@@ -3,7 +3,7 @@
 {% block content %}
 <section class="wrap page-head page-head--split" aria-labelledby="page-title">
   <div>
-    <h1 id="page-title" class="display">Resume</h1>
+    <h1 id="page-title" class="display">resume.</h1>
     {% if profile.headline %}<p class="lead">{{ profile.headline }}</p>{% endif %}
   </div>
   <button class="button print-button" type="button" data-print hidden>Save as PDF</button>
@@ -11,7 +11,7 @@
 
 <div class="wrap resume">
   <section class="resume-section" aria-labelledby="experience-heading">
-    <h2 id="experience-heading" class="display display--section section-rule">Experience</h2>
+    <h2 id="experience-heading" class="display display--section section-rule">experience.</h2>
     {% for item in experience %}
     <article class="entry">
       <p class="meta entry-when">{{ item.start_date|month_year }} – {{ "Present" if item.is_current else (item.end_date|month_year) }}{% if item.location %}<br>{{ item.location }}{% endif %}</p>
@@ -30,7 +30,7 @@
   </section>
 
   <section class="resume-section" aria-labelledby="education-heading">
-    <h2 id="education-heading" class="display display--section section-rule">Education</h2>
+    <h2 id="education-heading" class="display display--section section-rule">education.</h2>
     {% for group in education|groupby("institution_name") %}
     <article class="entry">
       {% set grad = group.list|map(attribute="end_date")|select|max %}
@@ -49,7 +49,7 @@
   </section>
 
   <section class="resume-section" aria-labelledby="skills-heading">
-    <h2 id="skills-heading" class="display display--section section-rule">Skills</h2>
+    <h2 id="skills-heading" class="display display--section section-rule">skills.</h2>
     {% if skills %}
     <dl class="skills">
       {% for group in skills|groupby("category", default="Other") %}
