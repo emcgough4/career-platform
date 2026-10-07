@@ -20,7 +20,7 @@
         ]
       },
       "plum-surface": {
-        "role": "neutral",
+        "role": "primary",
         "displayName": "Plum Surface",
         "canonical": "#3a1f48",
         "tonalRamp": [
@@ -32,6 +32,21 @@
           "#a58bb6",
           "#c9b3d6",
           "#ebe0f1"
+        ]
+      },
+      "cream": {
+        "role": "secondary",
+        "displayName": "Warm Cream",
+        "canonical": "#efe1cc",
+        "tonalRamp": [
+          "#2b2217",
+          "#43372a",
+          "#62533f",
+          "#857358",
+          "#a99677",
+          "#cbb899",
+          "#efe1cc",
+          "#faf4ea"
         ]
       },
       "bone-white": {
@@ -78,41 +93,72 @@
           "rgb(255 255 255 / 0.64)",
           "rgb(255 255 255 / 0.80)"
         ]
+      },
+      "phone-bezel": {
+        "role": "neutral",
+        "displayName": "Phone Bezel",
+        "canonical": "#140a1a",
+        "tonalRamp": [
+          "#140a1a",
+          "#1a0b22",
+          "#2a1336",
+          "#3a1f48",
+          "#5a3f6a",
+          "#7d6290",
+          "#a58bb6",
+          "#c9b3d6"
+        ]
       }
     },
     "typographyMeta": {
       "display": {
         "displayName": "Display",
-        "purpose": "The one page title: her name on home, the page name on inner pages. Archivo 800 at 75% width (--size-display)."
+        "purpose": "The one page title in cream Bodoni Moda 500: her name on home, the page name on inner pages (--size-display)."
       },
       "headline": {
         "displayName": "Section",
-        "purpose": "Section headings, case-study title, case metric and the Contact email address (--size-section)."
+        "purpose": "Lowercase full-stopped section titles, topic names, case-study title and the Contact email, in cream Bodoni Moda 500 (--size-section)."
       },
       "title": {
         "displayName": "Title",
-        "purpose": "Role names, card titles, subsection labels, button labels. Body size at 700 weight; not a separate size."
+        "purpose": "Card titles, role names, subsection labels, button labels. Archivo 700 at body size; not a separate size."
       },
       "body": {
         "displayName": "Body",
-        "purpose": "All reading text (--size-body); leads in plum mist up to 40rem, resume text capped at 65ch."
+        "purpose": "All reading text in Archivo (--size-body); leads in plum mist up to 40rem, resume text capped at 65ch; inline case-study notes at 700."
       },
       "label": {
         "displayName": "Meta",
-        "purpose": "Dates, locations, card meta, tags, footer, slot captions; tabular figures, sentence case (--size-meta)."
+        "purpose": "Dates, card meta, topic counts, tags, footer and cream card notes (at 700); Archivo, tabular figures, sentence case (--size-meta)."
       }
     },
-    "shadows": [],
+    "shadows": [
+      {
+        "name": "phone-lift",
+        "value": "0 0 0 1px rgb(255 255 255 / 0.12), 0 1.25rem 2.5rem -1.25rem rgb(8 2 12 / 0.7)",
+        "purpose": "Phone frame on work cards; detail pages use 0 1.5rem 3rem -1.5rem for the larger frame."
+      },
+      {
+        "name": "note-lift",
+        "value": "0 0.5rem 1.25rem -0.5rem rgb(8 2 12 / 0.6)",
+        "purpose": "Cream metric note overlapping card media. Inline notes carry none."
+      }
+    ],
     "motion": [
       {
         "name": "ease-out",
         "value": "cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Default easing for button fills, nav colour and card media scale."
+        "purpose": "Default easing for button fills, nav colour, topic card fill and card media scale."
       },
       {
         "name": "state-fast",
         "value": "0.2s",
         "purpose": "Button, nav and icon-button state changes."
+      },
+      {
+        "name": "topic-fill",
+        "value": "0.25s",
+        "purpose": "Topic card turning cream on hover or focus."
       },
       {
         "name": "media-scale",
@@ -121,7 +167,7 @@
       },
       {
         "name": "name-tighten",
-        "value": "scroll-driven, 0 to 40vh, letter-spacing -0.04em, opacity 0.55",
+        "value": "scroll-driven, 0 to 40vh, letter-spacing -0.035em, opacity 0.55",
         "purpose": "Hero name tightens as the page scrolls; static fallback and off under reduced motion."
       }
     ],
@@ -145,15 +191,15 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Solid bone-white button for the single main action on a page.",
+      "description": "Cream button for the single main action on a page; empties to a cream outline on hover.",
       "html": "<a class=\"ds-button ds-button--primary\" href=\"#\">Email me</a>",
-      "css": ".ds-button { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 1.5rem; font-family: var(--font, Archivo, sans-serif); font-size: var(--size-body, 1.0625rem); font-weight: 700; color: var(--text, #f4f3ef); background: transparent; border: 1px solid var(--text, #f4f3ef); border-radius: 0; text-decoration: none; cursor: pointer; transition: background-color 0.2s cubic-bezier(0.16,1,0.3,1), color 0.2s cubic-bezier(0.16,1,0.3,1), transform 0.2s cubic-bezier(0.16,1,0.3,1); } .ds-button--primary { background: var(--text, #f4f3ef); color: var(--bg, #2a1336); } .ds-button--primary:hover { background: transparent; color: var(--text, #f4f3ef); } .ds-button:active { transform: translateY(1px); } .ds-button:focus-visible { outline: 2px solid var(--text, #f4f3ef); outline-offset: 4px; }"
+      "css": ".ds-button { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 1.5rem; font-family: var(--font, Archivo, sans-serif); font-size: var(--size-body, 1.0625rem); font-weight: 700; color: var(--text, #f4f3ef); background: transparent; border: 1px solid var(--text, #f4f3ef); border-radius: 0; text-decoration: none; cursor: pointer; transition: background-color 0.2s cubic-bezier(0.16,1,0.3,1), color 0.2s cubic-bezier(0.16,1,0.3,1), transform 0.2s cubic-bezier(0.16,1,0.3,1); } .ds-button--primary { background: var(--cream, #efe1cc); border-color: var(--cream, #efe1cc); color: var(--bg, #2a1336); } .ds-button--primary:hover { background: transparent; color: var(--cream, #efe1cc); } .ds-button:active { transform: translateY(1px); } .ds-button:focus-visible { outline: 2px solid var(--text, #f4f3ef); outline-offset: 4px; }"
     },
     {
       "name": "Outline Button",
       "kind": "button",
       "refersTo": "button-outline",
-      "description": "Bone-white outline for the secondary action; fills on hover.",
+      "description": "Bone-white outline for secondary actions; fills bone white on hover.",
       "html": "<a class=\"ds-button-outline\" href=\"#\">See the work</a>",
       "css": ".ds-button-outline { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 1.5rem; font-family: var(--font, Archivo, sans-serif); font-size: var(--size-body, 1.0625rem); font-weight: 700; color: var(--text, #f4f3ef); background: transparent; border: 1px solid var(--text, #f4f3ef); border-radius: 0; text-decoration: none; cursor: pointer; transition: background-color 0.2s cubic-bezier(0.16,1,0.3,1), color 0.2s cubic-bezier(0.16,1,0.3,1); } .ds-button-outline:hover { background: var(--text, #f4f3ef); color: var(--bg, #2a1336); } .ds-button-outline:focus-visible { outline: 2px solid var(--text, #f4f3ef); outline-offset: 4px; }"
     },
@@ -174,12 +220,28 @@
       "css": ".ds-nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 4rem; padding: 0 1.5rem; background: rgb(42 19 54 / 0.85); backdrop-filter: blur(12px); font-family: var(--font, Archivo, sans-serif); font-size: var(--size-body, 1.0625rem); color: var(--text, #f4f3ef); } .ds-brand { font-weight: 700; color: inherit; text-decoration: none; } .ds-nav-links { display: flex; gap: 0.25rem; } .ds-nav-links a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 0.75rem; color: var(--muted, #c9b3d6); text-decoration: none; transition: color 0.2s cubic-bezier(0.16,1,0.3,1); } .ds-nav-links a:hover, .ds-nav-links a[aria-current=\"page\"] { color: var(--text, #f4f3ef); } .ds-nav-links a[aria-current=\"page\"] { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.5em; } .ds-nav a:focus-visible { outline: 2px solid var(--text, #f4f3ef); outline-offset: 4px; }"
     },
     {
-      "name": "Work Card",
+      "name": "Work Card (phone)",
       "kind": "card",
-      "refersTo": "work-card-media",
-      "description": "Signature reel and portfolio item: 9:16 square media, bold title, plum-mist meta, no container. Media scales on hover; clips play muted.",
-      "html": "<a class=\"ds-card\" href=\"#\"><span class=\"ds-card-media\"><span class=\"ds-card-fill\"></span><span class=\"ds-card-play\" aria-hidden=\"true\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\"><path d=\"M8 5.5v13l10.5-6.5z\" fill=\"currentColor\"/></svg></span></span><span class=\"ds-card-title\">Street interviews</span><span class=\"ds-card-meta\">2026</span></a>",
-      "css": ".ds-card { display: grid; gap: 0.35rem; width: 15rem; color: var(--text, #f4f3ef); text-decoration: none; font-family: var(--font, Archivo, sans-serif); font-size: var(--size-body, 1.0625rem); } .ds-card-media { position: relative; display: block; aspect-ratio: 9 / 16; overflow: hidden; background: var(--surface, #3a1f48); margin-bottom: 0.5rem; } .ds-card-fill { position: absolute; inset: 0; background: linear-gradient(160deg, #5a3f6a, #3a1f48); transition: transform 0.6s cubic-bezier(0.16,1,0.3,1); } .ds-card:hover .ds-card-fill, .ds-card:focus-visible .ds-card-fill { transform: scale(1.04); } .ds-card-play { position: absolute; left: 0.75rem; bottom: 0.75rem; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; background: rgb(42 19 54 / 0.75); color: var(--text, #f4f3ef); transition: opacity 0.3s; } .ds-card:hover .ds-card-play, .ds-card:focus-visible .ds-card-play { opacity: 0; } .ds-card-title { font-weight: 700; line-height: 1.35; } .ds-card-meta { font-size: var(--size-meta, 0.875rem); color: var(--muted, #c9b3d6); } .ds-card:focus-visible { outline: 2px solid var(--text, #f4f3ef); outline-offset: 4px; }"
+      "refersTo": "phone-frame",
+      "description": "Social video in the phone frame, the only rounded object, with a lifted cream metric note overlapping its right edge.",
+      "html": "<a class=\"ds-card\" href=\"#\"><span class=\"ds-card-visual\"><span class=\"ds-card-media\"><span class=\"ds-card-fill\"></span></span><span class=\"ds-note\">17.6K views · 550 likes</span></span><span class=\"ds-card-title\">Stop Sign Patrol</span><span class=\"ds-card-meta\">A street-comedy reel for The Loyolan.</span></a>",
+      "css": ".ds-card { display: grid; gap: 0.35rem; width: 15rem; color: var(--text, #f4f3ef); text-decoration: none; font-family: var(--font, Archivo, sans-serif); font-size: var(--size-body, 1.0625rem); } .ds-card-visual { position: relative; display: block; margin-bottom: 0.75rem; } .ds-card-media { position: relative; display: block; aspect-ratio: 9 / 16; overflow: hidden; background: var(--surface, #3a1f48); border: 0.4rem solid #140a1a; border-radius: 1.6rem; box-shadow: 0 0 0 1px rgb(255 255 255 / 0.12), 0 1.25rem 2.5rem -1.25rem rgb(8 2 12 / 0.7); } .ds-card-fill { position: absolute; inset: 0; background: #5a3f6a; transition: transform 0.6s cubic-bezier(0.16,1,0.3,1); } .ds-card:hover .ds-card-fill, .ds-card:focus-visible .ds-card-fill { transform: scale(1.04); } .ds-note { position: absolute; right: -0.5rem; bottom: 1.5rem; max-width: calc(100% - 0.5rem); background: var(--cream, #efe1cc); color: var(--bg, #2a1336); padding: 0.45rem 0.75rem; font-weight: 700; font-size: var(--size-meta, 0.875rem); line-height: 1.3; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 0.5rem 1.25rem -0.5rem rgb(8 2 12 / 0.6); } .ds-card-title { font-weight: 700; line-height: 1.35; } .ds-card-meta { font-size: var(--size-meta, 0.875rem); line-height: 1.45; color: var(--muted, #c9b3d6); } .ds-card:focus-visible { outline: 2px solid var(--text, #f4f3ef); outline-offset: 4px; }"
+    },
+    {
+      "name": "Topic Card",
+      "kind": "card",
+      "refersTo": "topic-card",
+      "description": "Tall plum-surface index card with a cream Bodoni topic name; turns cream on hover or focus.",
+      "html": "<a class=\"ds-topic\" href=\"#\"><span class=\"ds-topic-name\">video.</span><span class=\"ds-topic-count\">7 pieces</span></a>",
+      "css": ".ds-topic { display: flex; flex-direction: column; justify-content: space-between; gap: 1.5rem; width: 16rem; min-height: clamp(7rem, 12vw, 10rem); padding: 1.25rem; background: var(--surface, #3a1f48); border-radius: 0; text-decoration: none; transition: background-color 0.25s cubic-bezier(0.16,1,0.3,1); } .ds-topic-name { font-family: var(--serif, 'Bodoni Moda', Didot, Georgia, serif); font-weight: 500; font-size: var(--size-section, clamp(2.25rem, 5vw, 3.5rem)); line-height: 1.05; color: var(--cream, #efe1cc); transition: color 0.25s cubic-bezier(0.16,1,0.3,1); } .ds-topic-count { font-family: var(--font, Archivo, sans-serif); font-size: var(--size-meta, 0.875rem); color: var(--muted, #c9b3d6); transition: color 0.25s cubic-bezier(0.16,1,0.3,1); } .ds-topic:hover, .ds-topic:focus-visible { background: var(--cream, #efe1cc); } .ds-topic:hover .ds-topic-name, .ds-topic:focus-visible .ds-topic-name, .ds-topic:hover .ds-topic-count, .ds-topic:focus-visible .ds-topic-count { color: var(--bg, #2a1336); } .ds-topic:focus-visible { outline: 2px solid var(--text, #f4f3ef); outline-offset: 4px; }"
+    },
+    {
+      "name": "Section Title",
+      "kind": "custom",
+      "refersTo": "headline",
+      "description": "Lowercase, full-stopped cream Bodoni Moda section title on a 1px bone-white rule, as on the resume.",
+      "html": "<h2 class=\"ds-section\">experience.</h2>",
+      "css": ".ds-section { margin: 0; padding-bottom: 1.25rem; border-bottom: 1px solid var(--text, #f4f3ef); font-family: var(--serif, 'Bodoni Moda', Didot, Georgia, serif); font-weight: 500; font-size: var(--size-section, clamp(2.25rem, 5vw, 3.5rem)); line-height: 1.05; letter-spacing: -0.015em; color: var(--cream, #efe1cc); }"
     },
     {
       "name": "Fact Row",
@@ -188,14 +250,6 @@
       "description": "Hairline-ruled fact list: what on the left, plum-mist tabular date on the right.",
       "html": "<ul class=\"ds-facts\"><li><span>Marketing Intern, XDR Radiology</span><span class=\"ds-when\">Since Jan 2026</span></li><li><span>Loyola Marymount University, double degree</span><span class=\"ds-when\">Class of May 2027</span></li></ul>",
       "css": ".ds-facts { list-style: none; margin: 0; padding: 0; max-width: 42rem; border-top: 1px solid var(--line, rgb(255 255 255 / 0.14)); font-family: var(--font, Archivo, sans-serif); font-size: var(--size-body, 1.0625rem); color: var(--text, #f4f3ef); } .ds-facts li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 0.25rem 1.5rem; padding-block: 1rem; border-bottom: 1px solid var(--line, rgb(255 255 255 / 0.14)); } .ds-when { color: var(--muted, #c9b3d6); font-size: var(--size-meta, 0.875rem); font-variant-numeric: tabular-nums; }"
-    },
-    {
-      "name": "Section Heading",
-      "kind": "custom",
-      "refersTo": "headline",
-      "description": "Condensed 800-weight section heading on a 1px bone-white rule, as used on the resume.",
-      "html": "<h2 class=\"ds-section\">Experience</h2>",
-      "css": ".ds-section { margin: 0; padding-bottom: 1.25rem; border-bottom: 1px solid var(--text, #f4f3ef); font-family: var(--font, Archivo, sans-serif); font-weight: 800; font-stretch: 75%; font-size: var(--size-section, clamp(2.25rem, 5vw, 3.5rem)); line-height: 1; letter-spacing: -0.02em; color: var(--text, #f4f3ef); }"
     },
     {
       "name": "Empty Media Slot (preview-only)",
@@ -208,28 +262,29 @@
   ],
   "narrative": {
     "northStar": "The Screening Room",
-    "overview": "The house lights are dimmed to a deep plum and the screen is the brightest thing in the room. One plum ground, off-white type and no interface accent colour mean that, beyond the plum, every hue on the page comes from her clips and stills. Media sits in tall vertical frames, the way her work plays on a phone, and the page is built to be watched first and read second: a large name, one plain line, two actions, then a horizontal reel of work.\n\nOne family carries everything. Archivo at 800 weight and 75% width makes the condensed, poster-like display voice; the same family at normal width carries all reading text. Only four type sizes exist on screen. Structure comes from hairline rules, generous section spacing and square-cornered media, never from boxes, tints or decoration. Density is low on the home page and calm on the resume, where a date column and hairline-ruled entries make a recruiter's skim fast.\n\nConfirmed rejections: the earlier cobalt-and-chartreuse build, judged \"messy\" by the owner; a near-black ground, judged \"too dark\" (the owner chose plum from five rendered grounds on 2026-10-07); too many fonts and sizes; repeated content on one page.",
+    "overview": "The house lights are dimmed to a deep plum and the screen is the brightest thing in the room. A plum ground, off-white reading text and one warm cream for titles, the main action and the notes beside the work mean that every other hue on the page comes from her clips and stills. Social video plays in phone frames, the way it plays on a phone; web screens and documents sit at their own shape. The page is built to be watched first and read second: a large name, one plain line, two actions, then a horizontal reel of work.\n\nTwo families, four sizes. Bodoni Moda at 500 weight sets the name and the lowercase, full-stopped section titles (\"video.\", \"about.\", \"experience.\"), giving the polish of a printed programme; Archivo carries everything else, from body text to the cream metric notes. Structure comes from hairline rules, generous section spacing and square-cornered media. The level is the owner's \"Polished middle\": elegant serif titles, a topic index, phone frames and cream callout notes, and nothing beyond that. Density is low on the home page and calm on the resume, where a date column and hairline-ruled entries make a recruiter's skim fast.\n\nConfirmed rejections: the earlier cobalt-and-chartreuse build, judged \"messy\" by the owner; a near-black ground, judged \"too dark\" (plum was chosen from five rendered grounds on 2026-10-07); too many fonts and sizes; repeated content on one page; clip-art stickers and tilted collage from the Canva reference.",
     "keyCharacteristics": [
-      "Deep plum ground, off-white type, zero UI accent colour; the work supplies every other colour.",
-      "One family (Archivo variable), two widths, four sizes.",
-      "9:16 media with square corners, shown in place and playing on hover or focus.",
-      "Hairline rules and spacing for structure; no cards, shadows or rounded corners.",
-      "Two button states only: solid bone-white and bone-white outline."
+      "Deep plum ground, bone-white text, cream for titles and the one main action; the work supplies every other colour.",
+      "Two families (Bodoni Moda 500 for display and section titles, Archivo for the rest), four sizes.",
+      "Social video in rounded phone frames, the only rounded objects; everything else square.",
+      "Screens at 16:9 and documents at 4:5, shown at their own aspect; vertical 9:16 for clips and stills.",
+      "Cream notes carry real numbers beside the work.",
+      "Hairline rules and spacing for structure; plum-surface fill only on topic cards and empty media."
     ],
     "rules": [
       {
         "name": "The Work Brings The Colour Rule",
-        "body": "Plum is the ground, not an accent. Links, focus, buttons and highlights are all bone-white on plum ground; there is no second UI hue. A colour on screen that is neither the plum family nor her media is a defect.",
+        "body": "Plum is the ground and cream is the only accent. Links, focus and secondary controls are bone-white on plum; there is no third UI hue. A colour on screen that is neither the plum family, bone white, cream nor her media is a defect.",
         "section": "colors"
       },
       {
-        "name": "The Four Sizes Rule",
-        "body": "The screen uses exactly four type sizes: display, section, body and meta (the `--size-*` tokens). Every new element maps onto one of them; emphasis comes from weight (400, 700, 800) or colour (bone-white versus plum mist), never from a fifth size. Print stylesheet sizes (28pt display, 10.5pt body) are a separate medium and do not count.",
+        "name": "The Two Families Rule",
+        "body": "Bodoni Moda at 500 is reserved for the display and section roles: the page title, section titles, topic names and the one display-size data point (the Contact email). Archivo carries everything else, including the cream metric notes, buttons and card titles. No third family, and no Bodoni below section size.",
         "section": "typography"
       },
       {
-        "name": "The One Family Rule",
-        "body": "Archivo is the only typeface. The condensed 75% width belongs to display and headline roles only; everything else is normal width.",
+        "name": "The Four Sizes Rule",
+        "body": "The screen uses exactly four type sizes: display, section, body and meta (the `--size-*` tokens). Every new element maps onto one of them; emphasis comes from family, weight (400, 500, 700) or colour (cream, bone white, plum mist), never from a fifth size. Print stylesheet sizes (28pt display, 10.5pt body) are a separate medium and do not count.",
         "section": "typography"
       },
       {
@@ -239,25 +294,28 @@
       },
       {
         "name": "The Lights-Down Rule",
-        "body": "Nothing is lifted. If an element needs separation, use a hairline or spacing, not a shadow or a lighter panel.",
+        "body": "Only phones and notes are lifted. Any other element that needs separation gets a hairline or spacing, not a shadow or a lighter panel.",
         "section": "elevation"
       }
     ],
     "dos": [
-      "Do keep the UI to the plum family (ground, surface, mist), bone white and hairline, so her media is the only other source of colour.",
-      "Do map every text element onto one of the four sizes (display, section, body, meta) and vary weight or colour for emphasis.",
-      "Do use Archivo 800 at 75% width only for the page title, section headings and the rare headline-size data point.",
-      "Do frame media in 9:16 with square corners on plum surface, playing muted in place.",
+      "Do let her media be the only source of colour beyond plum, bone white and cream.",
+      "Do set page and section titles in cream Bodoni Moda 500, lowercase with a full stop where they name a section.",
+      "Do map every text element onto one of the four sizes (display, section, body, meta) and vary family, weight or colour for emphasis.",
+      "Do put social video in the phone frame and show screens (16:9) and documents (4:5) at their own aspect.",
+      "Do give a topic of more than four items a reel and a smaller topic a full-width grid with one column per item.",
+      "Do put only recorded numbers in cream notes.",
       "Do separate content with 1px hairlines and the section spacing token.",
       "Do keep tap targets at 44px or more and the 2px bone-white focus ring offset 4px.",
       "Do omit a section when its data is absent, rather than filling it with placeholders in production."
     ],
     "donts": [
-      "Don't add an accent colour, gradient, tinted panel or highlight, or a second hue beside plum.",
-      "Don't introduce a fifth type size or a second typeface.",
+      "Don't add a second accent colour, gradient, or tinted panel around reading text.",
+      "Don't introduce a fifth type size or a third typeface, or use Bodoni Moda for body, buttons or notes.",
       "Don't show the same email, link set or role twice on one page.",
-      "Don't add eyebrows or kickers above headings, uppercase tracked labels, or decorative frames around media.",
-      "Don't round corners, add shadows, or wrap text in cards.",
+      "Don't add eyebrows or kickers above titles, uppercase tracked labels, clip-art stickers or tilted collage.",
+      "Don't round anything but the phone frame, or lift anything but phones and notes.",
+      "Don't crop a web screen or document into a 9:16 frame.",
       "Don't ship the dashed empty-slot frame outside `PREVIEW_SLOTS` mode."
     ]
   }
