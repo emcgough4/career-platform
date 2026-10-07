@@ -46,7 +46,9 @@ She already produces the medium recruiters are hiring for: short-form vertical v
 ## Evidence on Hand
 
 - Real profile, 2 experiences, 2 LMU degrees (GPA 3.84, Dean's List, Ignatius Grant, Xavier Award), 12 skills in 3 categories.
-- **Absent, must not be fabricated:** work samples, video stills, metrics (views, follower growth), testimonials, availability dates, response-time promises.
+- **Owner-supplied work (2026-10-07):** 13 portfolio projects in `scripts/add_portfolio_projects.sql`, sourced from her 2026 portfolio PDF, her Instagram/YouTube/XDR links and her headshot. Likes and views are as shown on Instagram or in her PDF on that date, for reels she shot and edited on The Loyolan account (`@laloyolan`).
+- **Not for the portfolio (owner's instruction):** other XDR Radiology work, social media analytics and competitor research. These may still be mentioned on the resume.
+- **Absent, must not be fabricated:** testimonials, availability dates, response-time promises, and metrics for pieces that have none recorded.
 
 ## Product Principles
 

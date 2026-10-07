@@ -7,7 +7,8 @@
   {% if profile.availability %}<p class="lead">{{ profile.availability }}</p>{% endif %}
 
   {% if profile.email %}
-  <a class="email-address" href="mailto:{{ profile.email|lower }}">{{ profile.email|lower }}</a>
+  {% set address = profile.email|lower %}
+  <a class="email-address" href="mailto:{{ address }}">{{ address.split("@")[0] }}<wbr>@{{ address.split("@", 1)[1] if "@" in address else "" }}</a>
   {% endif %}
   <div class="actions">
     {% if profile.email %}<button class="button button--primary" type="button" data-copy="{{ profile.email|lower }}" hidden>Copy address</button>{% endif %}

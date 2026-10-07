@@ -4,7 +4,8 @@
 {% block content %}
 {% set player = project.project_url|embed_url %}
 <article class="wrap case">
-  <div class="case-media">
+  {% set is_ig = "instagram.com" in player %}
+  <div class="case-media{% if player %} case-media--phone{% if is_ig %} case-media--ig{% endif %}{% elif project.cover_image_url and not project.cover_image_url|is_video %} case-media--image{% endif %}">
     {% if player %}
     <iframe class="media" src="{{ player }}" title="{{ project.title }}" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
     {% elif project.cover_image_url|is_video %}

@@ -18,19 +18,33 @@
   {% endif %}
 </section>
 
-<div class="wrap">
-  {% if projects %}
-  {% for name in topics %}
-  <section class="topic-section" id="{{ topic_id(name) }}" aria-labelledby="{{ topic_id(name) }}-heading">
-    {% if topics|length > 1 %}<h2 id="{{ topic_id(name) }}-heading" class="display display--section">{{ name }}.</h2>{% endif %}
-    <ul class="work-grid" role="list">
-      {% for project in projects if (project.category or "more work") == name %}{{ work_card(project) }}{% endfor %}
-    </ul>
-  </section>
-  {% endfor %}
-  {% elif preview_slots %}
-  <ul class="work-grid" role="list">{% for n in range(1, 7) %}{{ slot_card(n) }}{% endfor %}</ul>
+{% if projects %}
+{# Up to four pieces fill one row; larger topics scroll sideways as a reel so no row is left ragged. #}
+{% for name in topics %}
+{% set items = projects|selectattr("category", "equalto", None if name == "more work" else name)|list %}
+<section class="topic-section" id="{{ topic_id(name) }}" aria-labelledby="{{ topic_id(name) }}-heading">
+  <div class="wrap reel-head">
+    <h2 id="{{ topic_id(name) }}-heading" class="display display--section">{{ name }}.</h2>
+    {% if items|length > 4 %}
+    <div class="reel-controls" data-reel-controls hidden>
+      <button class="icon-button" type="button" data-reel-prev aria-label="Previous {{ name }} work"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+      <button class="icon-button" type="button" data-reel-next aria-label="Next {{ name }} work"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+    </div>
+    {% endif %}
+  </div>
+  {% if items|length > 4 %}
+  <ul class="reel" role="list" data-reel tabindex="0" aria-label="{{ name }} work, scroll sideways">{% for project in items %}{{ work_card(project) }}{% endfor %}</ul>
   {% else %}
+  <ul class="wrap work-grid work-grid--fit" role="list" style="--cols: {{ items|length }}">{% for project in items %}{{ work_card(project) }}{% endfor %}</ul>
+  {% endif %}
+</section>
+{% endfor %}
+{% elif preview_slots %}
+<div class="wrap">
+  <ul class="work-grid" role="list">{% for n in range(1, 7) %}{{ slot_card(n) }}{% endfor %}</ul>
+</div>
+{% else %}
+<div class="wrap">
   <div class="empty-state">
     <p class="lead">No case studies are published yet.</p>
     <p>The resume covers the social, video and SEO work in the meantime.</p>
@@ -38,6 +52,6 @@
       <a class="button" href="/resume">Read the resume</a>
     </div>
   </div>
-  {% endif %}
 </div>
+{% endif %}
 {% endblock %}
