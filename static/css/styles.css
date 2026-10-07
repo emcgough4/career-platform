@@ -147,7 +147,7 @@ main:focus { outline: none; }
 .page-head { padding-block: clamp(3rem, 8vw, 6rem) clamp(2.5rem, 5vw, 4rem); }
 .page-head .lead { margin-top: 1.25rem; }
 .page-head--split { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 1.5rem; }
-.work-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 2.5rem 1.25rem; }
+.work-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(14rem, calc(50% - 0.5rem)), 1fr)); gap: 2.5rem 1rem; }
 .empty-state { max-width: 36rem; }
 .empty-state .lead { color: var(--text); margin-bottom: 0.5rem; }
 

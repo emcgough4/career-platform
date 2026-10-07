@@ -230,3 +230,4 @@ data/*.db-shm
 # Impeccable local artifacts (regenerable)
 .impeccable/review/
 .impeccable/hook.cache.json
+data/*.bak

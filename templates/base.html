@@ -11,7 +11,7 @@
   <meta property="og:title" content="{{ self.title() }}">
   {% if page_description %}<meta property="og:description" content="{{ page_description }}">{% endif %}
   <meta property="og:site_name" content="{{ site_name }}">
-  {% if profile and profile.photo_url and not profile.photo_url|is_video %}<meta property="og:image" content="{{ profile.photo_url }}">{% endif %}
+  {% if profile and profile.photo_url and not profile.photo_url|is_video %}<meta property="og:image" content="{{ (request.base_url|string).rstrip("/") ~ profile.photo_url if profile.photo_url.startswith("/") else profile.photo_url }}">{% endif %}
   <meta name="theme-color" content="#2a1336">
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/static/fonts/archivo-latin-standard-normal.woff2" as="font" type="font/woff2" crossorigin>
