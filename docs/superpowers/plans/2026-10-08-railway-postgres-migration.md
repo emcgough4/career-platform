@@ -62,13 +62,13 @@
 **Interfaces:**
 - Produces: `app.config.normalize_database_url(url: str) -> str`. Turns `postgres://…` and `postgresql://…` into `postgresql+psycopg://…` and returns any other URL unchanged. `settings.database_url` is always the normalized URL. Task 3 imports this function.
 
-- [ ] **Step 1: Create the branch**
+- [x] **Step 1: Create the branch**
 
 ```bash
 git switch -c railway-postgres
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Add to `tests/test_config.py` (keep the existing tests; add `import pytest` and the `app.config` import at the top):
 
@@ -110,12 +110,12 @@ def test_postgres_engine_uses_psycopg_and_pre_ping():
 
 The engine is built without connecting, so no Postgres server is needed.
 
-- [ ] **Step 3: Run the tests to verify they fail**
+- [x] **Step 3: Run the tests to verify they fail**
 
 Run: `uv run pytest tests/test_config.py tests/test_app_setup.py -v`
 Expected: collection error `ImportError: cannot import name 'normalize_database_url'`. With that import commented out, the engine test fails with `ModuleNotFoundError: No module named 'psycopg2'`.
 
-- [ ] **Step 4: Add the driver**
+- [x] **Step 4: Add the driver**
 
 ```bash
 uv add "psycopg[binary]"
@@ -124,7 +124,7 @@ echo 'psycopg[binary]' >> requirements.txt
 
 `requirements.txt` gets the line too so the two dependency lists stay in step, whichever one Railpack reads.
 
-- [ ] **Step 5: Write the implementation**
+- [x] **Step 5: Write the implementation**
 
 `app/config.py`:
 
@@ -161,12 +161,12 @@ connect_args = {"check_same_thread": False} if is_sqlite else {}
 engine = create_engine(settings.database_url, connect_args=connect_args, pool_pre_ping=not is_sqlite, future=True)
 ```
 
-- [ ] **Step 6: Run the full suite**
+- [x] **Step 6: Run the full suite**
 
 Run: `uv run pytest -q`
 Expected: all pass, including the existing `test_database_url_defaults_to_repo_root_sqlite` and `test_database_engine_uses_sqlite_thread_compatible_settings`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add pyproject.toml uv.lock requirements.txt app/config.py app/db.py tests/test_config.py tests/test_app_setup.py
@@ -185,7 +185,7 @@ git commit -m "feat: connect to Railway Postgres through psycopg 3"
 - Consumes: the `/health` route in `app/main.py`. `alembic/env.py` already migrates `settings.database_url`, which Task 1 normalizes.
 - Produces: `railway.json`. Section 5 relies on its pre-deploy and health-check behavior.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `tests/test_railway_config.py`:
 
@@ -215,12 +215,12 @@ def test_healthcheck_path_is_a_real_route():
     assert CONFIG["deploy"]["healthcheckPath"] in {route.path for route in app.routes}
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `uv run pytest tests/test_railway_config.py -v`
 Expected: collection error `FileNotFoundError: … railway.json`.
 
-- [ ] **Step 3: Write `railway.json`**
+- [x] **Step 3: Write `railway.json`**
 
 ```json
 {
@@ -243,12 +243,12 @@ Expected: collection error `FileNotFoundError: … railway.json`.
 - One worker is enough on Railway; it restarts the process if it crashes. A failed migration stops the deploy before traffic moves, and the old deploy keeps serving.
 - `--forwarded-allow-ips=*` is safe here because Railway's proxy is the only way in.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run pytest -q`
 Expected: all pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add railway.json tests/test_railway_config.py
@@ -267,7 +267,7 @@ git commit -m "feat: add Railway build, migrate, start and health-check config"
 - Consumes: `app.config.normalize_database_url` (Task 1), `app.db.Base`, all tables registered by `app.models`.
 - Produces: `app.copy_data.copy_database(source_url: str, target_url: str) -> dict[str, int]` (table name → rows copied), raising `ValueError` and copying nothing if the target already has rows or is on a different Alembic revision. Command line: `python -m app.copy_data <source_url> <target_url>`, printing one `table count` line per table. Section 6 runs it.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `tests/test_copy_data.py`:
 
@@ -351,12 +351,12 @@ def test_refuses_a_target_on_another_migration(tmp_path):
 
 The expected `counts` keys follow `Base.metadata.sorted_tables` (parents before children). If the dict comparison fails only on key order, it doesn't matter: dicts compare without order.
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `uv run pytest tests/test_copy_data.py -v`
 Expected: collection error `ModuleNotFoundError: No module named 'app.copy_data'`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 `app/copy_data.py`:
 
@@ -414,17 +414,23 @@ if __name__ == "__main__":
         print(name, count)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run pytest -q`
 Expected: all pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/copy_data.py tests/test_copy_data.py
 git commit -m "feat: add one-shot SQLite to Postgres copy script"
 ```
+
+> **Executed 2026-10-08: Tasks 1-3 complete on branch `railway-postgres`; suite 39 passed.** Deviations:
+> - Task 1: SQLAlchemy 2.1 already defaults `postgresql://` to psycopg 3, not psycopg2, so the RED failure was `No module named 'psycopg'`. The rewrite was kept: it still makes `postgres://` work and names the driver explicitly.
+> - Task 2: the start command uses plain `$PORT`, not `${PORT:-8000}`, because the plan's own test checks for `$PORT`. The health-check test uses `getattr(route, "path", None)` because this FastAPI version puts included routers with no `.path` in `app.routes`.
+> - Extra fix: `Project.tags` now has `order_by=Tag.id`. Served from Postgres, 4 project pages listed their tags in a different order from the live SQLite site.
+> - Checked on a throwaway local Postgres 17 using the VM backup: migrations ran, the copy counts matched, a second copy was refused, every sequence equalled `MAX(id)`, and all 17 pages (about, resume, portfolio, contact, 13 projects) were byte-identical to https://elliemcgough.me. Section 7 Step 1's link pattern was corrected from `/portfolio/` to `/projects/`.
 
 ## 4. Railway setup
 
@@ -530,7 +536,7 @@ Operator steps from the laptop. Steps that open a browser or prompt are run by t
   - **Where:** laptop
   - **Run:**
     ```bash
-    for p in /about /resume /portfolio /contact $(curl -s https://elliemcgough.me/portfolio | grep -oE 'href="/portfolio/[^"]+"' | cut -d'"' -f2 | sort -u); do
+    for p in /about /resume /portfolio /contact $(curl -s https://elliemcgough.me/portfolio | grep -oE 'href="/projects/[^"]+"' | cut -d'"' -f2 | sort -u); do
       diff <(curl -s "https://elliemcgough.me$p" | sed 's#https://elliemcgough.me#HOST#g') \
            <(curl -s "https://<RAILWAY_DOMAIN>$p" | sed 's#https://<RAILWAY_DOMAIN>#HOST#g') > /dev/null && echo "same $p" || echo "DIFF $p"
     done
