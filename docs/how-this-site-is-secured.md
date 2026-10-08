@@ -81,7 +81,7 @@ In Chrome, a customer can check the certificate like this:
 
 It should show the certificate was issued to `elliemcgough.me`, issued by Let's Encrypt (YE2), and expires on January 4, 2027.
 
-I don't have Chrome, so I checked in Safari 26.6 instead. In Safari, I opened the page menu at the left of the address field and chose to show the certificate. It shows an encrypted connection to my domain, and it shows when the certificate expires: January 4, 2027 at 1:03:50 PM Pacific, the same time as the `notAfter` date in my openssl output (21:03:50 GMT). It also says "This certificate is valid."
+I don't have Chrome, so I checked in Safari 26.6 instead. In Safari, I clicked **Safari** in the top menu bar, then **Connection Security Details**. It shows an encrypted connection to my domain, and it shows when the certificate expires: January 4, 2027 at 1:03:50 PM Pacific, the same time as the `notAfter` date in my openssl output (21:03:50 GMT). It also says "This certificate is valid."
 
 YE2 is the name of one of Let's Encrypt's intermediate certificates. It signed my certificate, and it traces back to Let's Encrypt's root, ISRG Root X2, which Safari already trusts. That chain is why the certificate shows as valid.
 
