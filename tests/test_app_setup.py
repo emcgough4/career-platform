@@ -1,3 +1,8 @@
+import os
+import subprocess
+import sys
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -34,3 +39,12 @@ def test_database_engine_uses_sqlite_thread_compatible_settings():
 
     assert engine.url.drivername == "sqlite"
     assert engine.pool._creator
+
+
+def test_postgres_engine_uses_psycopg_and_pre_ping():
+    env = {**os.environ, "DATABASE_URL": "postgresql://u:p@localhost:5432/railway"}
+    result = subprocess.run(
+        [sys.executable, "-c", "from app.db import engine; print(engine.url.drivername, engine.pool._pre_ping)"],
+        cwd=Path(__file__).resolve().parents[1], env=env, capture_output=True, text=True, check=True,
+    )
+    assert result.stdout.strip() == "postgresql+psycopg True"
