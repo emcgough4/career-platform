@@ -109,4 +109,5 @@ class Project(Base):
     year: Mapped[int | None] = mapped_column(Integer)
     category: Mapped[str | None] = mapped_column(String(100))
     profile: Mapped[Profile] = relationship(back_populates="projects")
-    tags: Mapped[list[Tag]] = relationship(secondary=project_tags, back_populates="projects")
+    # Postgres has no default row order, so fix one (tag id, which is what SQLite showed).
+    tags: Mapped[list[Tag]] = relationship(secondary=project_tags, back_populates="projects", order_by=Tag.id)
