@@ -24,12 +24,12 @@ DNS is on Cloudflare. `elliemcgough.me` is a CNAME to Railway, set to DNS only (
 
 ## Deploy
 
-The service isn't connected to GitHub yet, so deploys are made from the laptop with the [Railway CLI](https://docs.railway.com/guides/cli):
+Every push to `main` on GitHub deploys automatically. To deploy local changes without pushing, or to check on a deploy, use the [Railway CLI](https://docs.railway.com/guides/cli):
 
 ```bash
 railway login
 railway link          # project astonishing-vision, environment production
-railway up --service career-platform --ci
+railway up --service career-platform --ci     # deploy the working tree without pushing
 railway deployment list --service career-platform
 railway logs --service career-platform
 ```
