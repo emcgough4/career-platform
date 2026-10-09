@@ -21,3 +21,9 @@ def test_migrations_run_before_each_deploy():
 
 def test_healthcheck_path_is_a_real_route():
     assert CONFIG["deploy"]["healthcheckPath"] in {getattr(route, "path", None) for route in app.routes}
+
+
+def test_railpack_builds_with_the_same_start_command():
+    # Railpack's build step refuses to run without its own start command; railway.json's isn't passed to it.
+    railpack = json.loads((Path(__file__).resolve().parents[1] / "railpack.json").read_text())
+    assert railpack["deploy"]["startCommand"] == CONFIG["deploy"]["startCommand"]
