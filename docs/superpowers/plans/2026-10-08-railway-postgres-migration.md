@@ -486,6 +486,14 @@ Operator steps from the laptop. Steps that open a browser or prompt are run by t
   - **Check:** `{"status":"ok"}`, then `0`.
   - **Undo:** none needed
 
+> **Executed 2026-10-08 (out of order: the user had already pointed the apex CNAME at Railway, so elliemcgough.me returned Railway's `404 Application not found` until this deploy).**
+> - Project `astonishing-vision`, environment `production`, services `career-platform` (web) and `Postgres`. `DATABASE_URL` on the web service was already set and points to `postgres.railway.internal`. The only domain on the web service is `elliemcgough.me`; no `*.up.railway.app` domain was created.
+> - The first `railway up` failed, like the two earlier deploys at 14:27 and 14:30: Railpack said `No start command detected`. Railpack does not see `railway.json`'s `startCommand`, so `railpack.json` now carries the same command, and a test keeps the two equal.
+> - Railpack installs with **pip from `requirements.txt`** and ignores `uv.lock`. `requirements.txt` is now exported from `uv.lock` (`uv export --no-hashes --no-emit-project --locked`), and a test checks that every line is pinned.
+> - The user ran the second `railway up` from branch `railway-postgres` at `5488a44`. Its build used `railpack.json`, Python 3.12, and pip with the pinned set (psycopg 3.3.6, uvicorn 0.54.0).
+> - Live checks on https://elliemcgough.me: `/health` returns `{"status":"ok"}`, `server: railway-hikari`, the name is present and the fallback marker count is 0, and `og:image` uses `https://`. All 17 pages (about, resume, portfolio, contact, 13 projects) are byte-identical to the VM's copy on `www`. The 404 page returns 404, static CSS returns 200, and the Let's Encrypt certificate is valid until 2027-01-06. HEAD requests return 405, the same as on the VM.
+> - The CLI warns that `railway.json` (config as code) is deprecated and will stop working on 2026-12-01; migrate with `railway config migrate`.
+
 ## 6. Copy the data
 
 - [x] **Step 1: Start the content freeze and take a consistent snapshot on the VM**
