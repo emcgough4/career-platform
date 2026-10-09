@@ -497,7 +497,7 @@ Operator steps from the laptop. Steps that open a browser or prompt are run by t
 
 > **Executed 2026-10-08: Step 1 complete (run on its own, ahead of Sections 1-5).** `data/railway-copy-2026-10-08.db` was made with `.backup` (57344 bytes, mode 600). `PRAGMA integrity_check` returned `ok`. Row counts match the live DB: profiles 1, experiences 2, education 2, skills 12, tags 13, projects 13, project_tags 27. Revision `0002_project_category`, profile `Eleanor McGough`. The VM's `git status -s` is clean because the file is gitignored. **The content freeze starts now.** If content changes on the VM before Section 6 Step 3, take a new backup.
 
-- [ ] **Step 2: Bring the snapshot to the laptop and count rows**
+- [x] **Step 2: Bring the snapshot to the laptop and count rows**
   - **Where:** laptop, repo root
   - **Run:**
     ```bash
@@ -509,7 +509,7 @@ Operator steps from the laptop. Steps that open a browser or prompt are run by t
   - **Check:** `check-ignore` prints the path. Counts are profiles 1, experiences 2, education 2, skills 12, tags 13, projects 13, project_tags 27 and the version is `0002_project_category`. Other numbers mean content changed since 2026-10-08; use the new numbers from here on.
   - **Undo:** `rm data/railway-copy-2026-10-08.db`
 
-- [ ] **Step 3: Copy into Railway Postgres**
+- [x] **Step 3: Copy into Railway Postgres**
   - **Where:** laptop, repo root
   - **Run:**
     ```bash
@@ -529,6 +529,14 @@ Operator steps from the laptop. Steps that open a browser or prompt are run by t
   - **Why:** `railway run` puts the Postgres variables into that one command's environment, so the password is never typed or saved. The laptop is outside Railway's private network, so it uses `DATABASE_PUBLIC_URL`.
   - **Check:** The copy prints the same counts as Step 2. In the sequence check, the two numbers on every line are equal. If the copy prints `already has rows`, nothing was written; find out why the target isn't empty before going further.
   - **Undo:** In the dashboard, Postgres → Data, truncate the seven tables (or run `TRUNCATE profiles, experiences, education, skills, tags, projects, project_tags RESTART IDENTITY CASCADE`). Then re-run.
+
+> **Executed 2026-10-08: Steps 2-3 complete, without the Railway CLI** (at the user's request). The `DATABASE_PUBLIC_URL` (host on `proxy.rlwy.net`) came from the untracked repo file `env`. Each command read it into an environment variable, and it was never printed. Order of work:
+> - A fresh `.backup` of the live VM DB matched `railway-copy-2026-10-08.db` in every table's row count and row checksum, so nothing had changed since the backup.
+> - Railway Postgres (server 18.6, database `railway`) had no tables. `alembic upgrade head` was run against it from the laptop (`0001_core_schema`, `0002_project_category`), because the app has not been deployed yet to run its pre-deploy step. A later pre-deploy run will find it at head and do nothing.
+> - `python -m app.copy_data` copied profiles 1, tags 13, education 2, experiences 2, projects 13, skills 12, project_tags 27.
+> - Per-table comparison against the live VM DB: every row count and every row checksum (SHA-256 of all columns, ordered by primary key) matched, as did `alembic_version`. Every id sequence equals `MAX(id)` with `is_called = true`.
+> - The temporary local copies and the VM's extra `railway-verify.db` were deleted. `railway-copy-2026-10-08.db` stays on the VM.
+> - **The content freeze still applies** until DNS cutover. Any edit on the VM from now on must also be made in Railway.
 
 ## 7. Verify Railway serves the same site
 

@@ -231,3 +231,7 @@ data/*.db-shm
 .impeccable/review/
 .impeccable/hook.cache.json
 data/*.bak
+
+# Local credentials and CLI caches (never commit)
+/env
+/.cloudflare/
