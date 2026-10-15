@@ -31,3 +31,11 @@ def resume_page(request: Request, session: Session = Depends(get_session)):
     return templates.TemplateResponse(
         request=request, name="resume.html", context={**context, "fallback": fallback}
     )
+
+
+@router.get("/privacy", response_class=HTMLResponse)
+def privacy_page(request: Request, session: Session = Depends(get_session)):
+    context, fallback = load_public_profile(session)
+    return templates.TemplateResponse(
+        request=request, name="privacy.html", context={**context, "fallback": fallback}
+    )

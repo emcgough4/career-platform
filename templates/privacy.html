@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Privacy · {{ profile.full_name }}{% endblock %}
+{#
+  This page describes the site WITH the planned Google Analytics 4 tag (G-QX9JPW5PPP).
+  Publish it in the same deploy that adds the tag, not before.
+  Lines marked CONFIRM depend on settings that aren't in this repo.
+#}
+{% block content %}
+<section class="wrap page-head" aria-labelledby="page-title">
+  <h1 id="page-title" class="display">Privacy.</h1>
+  <p class="lead">What this site collects about visitors, why, who receives it, and the choices you actually have.</p>
+  <p class="meta">Last updated October 15, 2026</p>
+</section>
+
+<div class="wrap policy">
+  <section class="case-section">
+    <h2 class="title">The short version</h2>
+    <p>This site has no accounts, forms or comment boxes, and it doesn't ask you to type anything in. It does use Google Analytics to count page views and clicks on links to other sites. That sets cookies in your browser and sends information about your visit to Google. Some project pages also load Instagram or YouTube players, which connect your browser to those companies.</p>
+  </section>
+
+  <section class="case-section">
+    <h2 class="title">Google Analytics</h2>
+    <p>I use Google Analytics 4 to see which pages people visit and which outside links they follow, like a project's live site or my LinkedIn. This helps me decide what to keep, fix or feature on the site.</p>
+    <p>When a page loads, Google's script runs in your browser and sends Google:</p>
+    <ul class="points">
+      <li>the page you viewed, its title, and the page you came from</li>
+      <li>the address of any link to another site that you click</li>
+      <li>your browser, device type, operating system, screen size and language</li>
+      <li>your IP address, which Google uses to estimate your approximate location (such as city and country)</li>
+      <li>a random ID stored in a cookie, so repeat visits from the same browser can be counted as the same visitor</li>
+      <li>when your visit starts and roughly how long you stay</li>
+    </ul>
+    {# CONFIRM: in GA4, Admin > Data streams > Enhanced measurement, leave only "Page views" and "Outbound clicks" on.
+       By default it also records scrolling, site search, file downloads, form interactions and video engagement.
+       If you leave any of those on, list them above. #}
+    <p>The script stores two cookies in your browser: <code>_ga</code> and <code>_ga_QX9JPW5PPP</code>. By default, each one lasts up to two years unless you clear it.</p>
+    <p>Google says Google Analytics 4 does not log or store IP addresses. It uses them to estimate location and then discards them. I can't check this independently.</p>
+    {# CONFIRM: Admin > Data collection and modification > Data retention (2 or 14 months). Replace "[2 or 14]" before publishing. #}
+    <p>Detailed visit records are kept in Google Analytics for [2 or 14] months. Totals, like the number of views a page got in a month, can be kept longer.</p>
+    {# CONFIRM: Google signals is off and the property isn't linked to Google Ads. If either is on, this paragraph is not true. #}
+    <p>I don't use Google Analytics for advertising, and I don't sell visitor data. I see reports, not names. Google receives the data and handles it under its own <a href="https://policies.google.com/privacy" rel="noopener">privacy policy</a> and the data sharing settings on my account. Google explains <a href="https://policies.google.com/technologies/partner-sites" rel="noopener">how it uses information from sites that use its services</a>.</p>
+  </section>
+
+  <section class="case-section">
+    <h2 class="title">Instagram and YouTube players</h2>
+    <p>Some project pages show a video from Instagram (run by Meta) or YouTube (run by Google). These players load automatically when you open the page. Your browser then connects directly to Meta or Google, which receive your IP address and browser information. They may also read or set their own cookies, especially if you're signed in to them. YouTube videos use its privacy-enhanced mode (<code>youtube-nocookie.com</code>), which Google says reduces tracking, but it still connects you to Google. I don't control or receive any of this data.</p>
+  </section>
+
+  <section class="case-section">
+    <h2 class="title">Hosting</h2>
+    {# CONFIRM: how long Railway keeps service logs and HTTP logs on your plan. #}
+    <p>The site runs on <a href="https://railway.com/legal/privacy" rel="noopener">Railway</a>. Like most web servers, it records each request in a log: the time, your IP address, the page requested and whether it worked. I use these logs only to fix problems. Railway stores them under its own retention settings. The site itself sets no cookies.</p>
+  </section>
+
+  <section class="case-section">
+    <h2 class="title">Email</h2>
+    <p>If you email me through a link on this site, your mail app sends the message, and I receive your address and whatever you write.{% if profile.email and "gmail.com" in profile.email|lower %} My inbox is hosted by Google (Gmail).{% endif %} I use your email only to reply, and I'll delete our messages if you ask.</p>
+  </section>
+
+  <section class="case-section">
+    <h2 class="title">Your choices</h2>
+    <p>This site does not ask permission before Google Analytics loads. It doesn't have a cookie banner, and it doesn't respond to Do Not Track or Global Privacy Control signals. These are the choices that work today:</p>
+    <ul class="points">
+      <li>Block or clear cookies in your browser settings, or browse in a private window.</li>
+      <li>Install Google's <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener">Google Analytics opt-out add-on</a> for desktop browsers.</li>
+      <li>Use a content blocker. Many block Google Analytics and embedded players.</li>
+      <li>Avoid project pages with embedded videos, or watch those videos directly on Instagram or YouTube.</li>
+    </ul>
+    <p>Google Analytics doesn't tell me who you are, so I usually can't find or delete one person's visit records.</p>
+  </section>
+
+  <section class="case-section">
+    <h2 class="title">Questions</h2>
+    <p>{% if profile.email %}Email me at <a href="mailto:{{ profile.email|lower }}">{{ profile.email|lower }}</a>.{% else %}Use the details on the <a href="/contact">Contact</a> page.{% endif %} If this page changes, I'll update the date at the top.</p>
+  </section>
+</div>
+{% endblock %}

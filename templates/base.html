@@ -35,6 +35,7 @@
   <main id="main" tabindex="-1">{% block content %}{% endblock %}</main>
   <footer class="site-footer">
     <div class="wrap footer-inner">
+      <a href="/privacy"{% if path == "/privacy" %} aria-current="page"{% endif %}>Privacy</a>
       <a href="#main">Back to top</a>
     </div>
   </footer>

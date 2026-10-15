@@ -227,6 +227,12 @@ main:focus { outline: none; }
 .case-section .title { margin-bottom: 0.5rem; }
 .case-body > .meta { margin-top: 2.5rem; }
 
+/* Privacy */
+.policy { max-width: 42rem; }
+.policy .case-section p, .policy .points { color: var(--muted); }
+.policy .case-section p + p, .policy .case-section p + .points, .policy .points + p { margin-top: 0.75rem; }
+.policy .points { margin-top: 0.75rem; }
+
 /* Contact */
 .contact { padding-top: clamp(3rem, 8vw, 6rem); }
 .contact .lead { margin-top: 1.25rem; }
