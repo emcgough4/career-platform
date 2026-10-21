@@ -463,6 +463,8 @@ Operator steps from the laptop. Steps that open a browser or prompt are run by t
   - **Check:** The dashboard shows the repo and `main`. The domain command prints `<RAILWAY_DOMAIN>`. Record it in the Executed note.
   - **Undo:** Disconnect the repo in the same settings panel; delete the domain under Settings → Networking.
 
+> **Recorded 2026-10-21, afterward. These steps weren't run as written.** The Railway project `astonishing-vision` already existed with a `career-platform` web service and a `Postgres` service. Its `DATABASE_URL` was already a reference to `postgres.railway.internal` (Section 5 note). The CLI was installed and linked, and `railway status` on 2026-10-21 shows the project and `production` environment. No `*.up.railway.app` domain was generated, so Section 7 could not be run against one (see below). Whether GitHub autodeploy from `main` is switched on isn't recorded here.
+
 ## 5. Ship the code
 
 - [ ] **Step 1: Push and merge (ask first)**
@@ -573,6 +575,8 @@ Operator steps from the laptop. Steps that open a browser or prompt are run by t
   - **Check:** The `og:image` URL starts with `https://` (if there is no `og:image`, the profile has no photo, which is fine). The 404 check prints `404`.
   - **Undo:** none needed
 
+> **Recorded 2026-10-21, afterward. Covered by the Section 5 checks, not run as written.** There was no `<RAILWAY_DOMAIN>`, and the apex already pointed at Railway, so the comparison ran with `https://elliemcgough.me` (Railway) against `www` (still the VM). The Section 5 note records: all 17 pages byte-identical (Step 1), the name present and fallback count 0 (Step 2), `og:image` on `https://` and the 404 page returning 404 (Step 3).
+
 ## 8. Cut the domain over to Railway
 
 Gate: Section 7 all passed. This changes what the public sees; ask the user before Step 2.
@@ -596,6 +600,15 @@ Gate: Section 7 all passed. This changes what the public sees; ask the user befo
   - **Run:** `curl -sI https://elliemcgough.me/about | grep -i '^server'; curl -sI https://www.elliemcgough.me/about | grep -i '^server'; curl -s https://elliemcgough.me/about | grep -c 'Showing the latest saved profile snapshot'`
   - **Check:** Both `server` headers say `railway-edge` (the VM's say `nginx`), and the fallback count is `0`. The content freeze ends here.
   - **Undo:** Section 8 Step 2's undo.
+
+> **Recorded 2026-10-21, afterward, from git timestamps and Cloudflare record dates. The cutover happened out of order: DNS moved before the deploy.**
+> - 2026-10-08 14:52 PDT: this plan committed (`5219f59`). The Section 5 note also mentions two failed Railway deploys "at 14:27 and 14:30", with no time zone given. Neither served the site.
+> - 15:55 PDT (22:55:42 UTC): `_railway-verify` TXT record created in Cloudflare. 16:00 PDT (23:00:48 UTC): the apex A record to the VM was replaced by a CNAME to `tmbs117o.up.railway.app`, DNS only. Only `elliemcgough.me` was added to Railway, not `www` (the trial allows one custom domain).
+> - From then until the first working deploy, the apex returned Railway's `404 Application not found` to anyone whose DNS had updated. **This was an outage of up to about 75 minutes,** caused by doing Step 2 before Sections 5 and 7.
+> - 17:05 PDT: data copy recorded (`4c2d061`, Section 6 note). 17:14 PDT: `5488a44` fixed the start command, and the next `railway up` was the first working deploy (recorded in `657405e` at 17:16). The Section 5 checks then passed on the apex, so the content freeze ended there.
+> - `www` kept pointing at the VM until 2026-10-13 21:08 UTC. It then became a proxied placeholder, and a Cloudflare redirect rule (2026-10-14 00:32 UTC) sends it to the apex. See `docs/evidence/dns-https-final.md`.
+> - Post-cutover check, 2026-10-21 17:10 UTC: `/about`, `/resume`, `/portfolio` and `/contact` return 200 with no fallback marker, and the apex certificate is Railway's Let's Encrypt certificate (`docs/evidence/dns-https-final.md`).
+> - The rollback in Step 2's undo (A records back to the VM) was not needed. It is no longer available, because the VM is permanently shut off.
 
 ## 9. After cutover (not done by this plan)
 
