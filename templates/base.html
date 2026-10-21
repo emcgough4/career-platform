@@ -30,7 +30,7 @@
   {% if fallback %}<!-- Showing the latest saved profile snapshot. -->{% endif %}
   <a class="skip-link" href="#main">Skip to content</a>
   {% set path = request.url.path %}
-  {% set show_work = projects is not defined or projects or preview_slots %}
+  {% set show_work = projects is not defined or projects or preview_slots or fallback %}
   <header class="site-header">
     <nav class="wrap site-nav" aria-label="Primary navigation">
       <a class="brand" href="/about"{% if path in ("/", "/about") %} aria-current="page"{% endif %}>{{ profile.full_name if profile and profile.full_name else "Profile" }}</a>

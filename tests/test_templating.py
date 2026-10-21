@@ -27,9 +27,14 @@ def test_missing_page_keeps_json_for_api_clients(client):
     assert response.json() == {"detail": "Project not found"}
 
 
-def test_fallback_marker_stays_greppable_but_hidden(client):
+def test_fallback_marker_stays_greppable_but_hidden(client, database):
+    database.down = True
     response = client.get("/about")
     assert "<!-- Showing the latest saved profile snapshot. -->" in response.text
+    assert client.get("/about").status_code == 503
+
+    database.down = False
+    assert "Showing the latest saved profile snapshot." not in client.get("/about").text
 
 
 def test_nav_marks_current_page(client):

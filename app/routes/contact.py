@@ -13,5 +13,6 @@ router = APIRouter()
 def contact_page(request: Request, session: Session = Depends(get_session)):
     context, fallback = load_public_profile(session)
     return templates.TemplateResponse(
-        request=request, name="contact.html", context={**context, "fallback": fallback}
+        request=request, name="contact.html", context={**context, "fallback": fallback},
+        status_code=503 if fallback else 200,
     )

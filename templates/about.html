@@ -40,6 +40,15 @@
 </section>
 {% endif %}
 
+{% if fallback %}
+<section class="wrap" id="work" aria-label="Work">
+  <div class="empty-state">
+    <p class="lead">Projects temporarily unavailable.</p>
+    <p>Please try again in a few minutes.</p>
+  </div>
+</section>
+{% endif %}
+
 {% set current_roles = experience|selectattr("is_current")|list %}
 <section class="wrap about" aria-labelledby="about-heading">
   <h2 id="about-heading" class="display display--section">about.</h2>

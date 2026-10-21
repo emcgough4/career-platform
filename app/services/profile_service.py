@@ -62,10 +62,16 @@ def get_public_profile_context(session: Session) -> dict:
     return serialize_profile(profile)
 
 
+def load_saved_profile() -> dict:
+    """The saved profile for when the database can't be read. Projects stay empty so a
+    failed query is never hidden behind saved content."""
+    return {**load_latest_snapshot(), "projects": []}
+
+
 def load_public_profile(session: Session | None) -> tuple[dict, bool]:
     if session is None:
-        return load_latest_snapshot(), True
+        return load_saved_profile(), True
     try:
         return get_public_profile_context(session), False
     except Exception:
-        return load_latest_snapshot(), True
+        return load_saved_profile(), True

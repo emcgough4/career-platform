@@ -17,9 +17,7 @@ def test_health_endpoint_returns_ok():
     assert response.json()["status"] == "ok"
 
 
-def test_root_route_renders_without_crashing():
-    client = TestClient(app)
-
+def test_root_route_renders_without_crashing(client):
     response = client.get("/")
 
     assert response.status_code == 200

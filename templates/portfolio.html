@@ -18,7 +18,14 @@
   {% endif %}
 </section>
 
-{% if projects %}
+{% if fallback %}
+<div class="wrap">
+  <div class="empty-state">
+    <p class="lead">Projects temporarily unavailable.</p>
+    <p>Please try again in a few minutes.</p>
+  </div>
+</div>
+{% elif projects %}
 {# Up to four pieces fill one row; larger topics scroll sideways as a reel so no row is left ragged. #}
 {% for name in topics %}
 {% set items = projects|selectattr("category", "equalto", None if name == "more work" else name)|list %}

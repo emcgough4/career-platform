@@ -13,13 +13,19 @@ router = APIRouter()
 def portfolio_page(request: Request, session: Session = Depends(get_session)):
     context, fallback = load_public_profile(session)
     return templates.TemplateResponse(
-        request=request, name="portfolio.html", context={**context, "fallback": fallback}
+        request=request, name="portfolio.html", context={**context, "fallback": fallback},
+        status_code=503 if fallback else 200,
     )
 
 
 @router.get("/projects/{project_id}", response_class=HTMLResponse)
 def project_detail_page(request: Request, project_id: int, session: Session = Depends(get_session)):
     context, fallback = load_public_profile(session)
+    if fallback:
+        return templates.TemplateResponse(
+            request=request, name="portfolio.html", context={**context, "fallback": fallback},
+            status_code=503,
+        )
     project = next((item for item in context["projects"] if item["id"] == project_id), None)
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
