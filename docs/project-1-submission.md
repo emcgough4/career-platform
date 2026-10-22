@@ -8,7 +8,7 @@
 
 Items marked **Not yet recorded** are open. `TASKS.md` lists what closes each one.
 
-**Note:** not every gap could be fixed, because of problems with Railway on 2026-10-21. The Railway-dependent checks (the snapshot refresh, the live recovery check, and the commit-to-deployment evidence) are still open. [`TASKS.md`](../TASKS.md) lists them.
+**Note:** not every gap could be fixed, because of problems with Railway on 2026-10-21. The Railway-dependent checks (the snapshot refresh, the live recovery check, and deploying the 503 change) are still open. [`TASKS.md`](../TASKS.md) lists them.
 
 ## 1. README, original spec and plans
 
@@ -50,7 +50,7 @@ Items marked **Not yet recorded** are open. `TASKS.md` lists what closes each on
 
 ## 5. Reviewed change through Railway
 
-- Commit, Railway deployment and live result: **Not yet recorded.**
+- Commit, Railway deployment and live result: [railway-deploy.md](evidence/railway-deploy.md). [`839b0c0`](https://github.com/emcgough4/career-platform/commit/839b0c0) → deployment `3ddcbf11` → GA4 tag live, checked 2026-10-22
 - Recovery explanation: [README "Rollback"](../README.md#rollback)
 
 ## 6. Zoho email

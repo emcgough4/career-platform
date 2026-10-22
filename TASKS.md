@@ -5,10 +5,8 @@ Found in a repository audit on 2026-10-20 against the Project 1 requirements. Ea
 > **2026-10-21: not every gap can be closed before submission, because Railway was having problems.** These are waiting on Railway:
 > - The real-profile snapshot refresh. `data/public_profile_snapshot.json` is still the placeholder ("Your Name"), so a database outage shows that instead of my profile.
 > - The dated live check of database recovery.
-> - The reviewed commit linked to its Railway deployment and live result.
-> - Confirming Railway's GitHub autodeploy branch.
 >
-> The 503 fallback code and its tests are done (48 passing) and pushed. The Azure items can't be closed either, because the VM is shut off.
+> The 503 fallback code and its tests are done (48 passing) and pushed, but Railway hadn't deployed that push as of 2026-10-22 18:34 UTC ([railway-deploy.md](docs/evidence/railway-deploy.md)). The Azure items can't be closed either, because the VM is shut off.
 
 ## 1. Profile and project data
 
@@ -57,8 +55,10 @@ Found in a repository audit on 2026-10-20 against the Project 1 requirements. Ea
 
 ## 5. Reviewed change through Railway
 
-- [ ] Connect one reviewed commit SHA to its Railway deployment ID and the live behavior at the domain — dated evidence file
-- [ ] Confirm GitHub autodeploy and its branch in Railway — screenshot or `railway deployment list` output
+- [x] Connect one reviewed commit SHA to its Railway deployment ID and the live behavior at the domain — dated evidence file
+  > **2026-10-22:** `docs/evidence/railway-deploy.md`. `839b0c0` → deployment `3ddcbf11`, GA4 tag live once on the page. The user reviewed the Google Analytics change in class.
+- [x] Confirm GitHub autodeploy and its branch in Railway — screenshot or `railway deployment list` output
+  > **2026-10-22:** `railway deployment list` shows a deployment per push on `main` ([railway-deploy.md](docs/evidence/railway-deploy.md)).
 - [x] Explain restoring a previous version for code and for database changes — README rollback section
   > **2026-10-21:** README "Rollback".
 
