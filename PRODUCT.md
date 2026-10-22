@@ -41,6 +41,7 @@ She already produces the medium recruiters are hiring for: short-form vertical v
 - 2026-10-07, after the first redesign was judged "not a clean work and is messy": the owner chose the **Bold creative** direction, where her work leads (large photo and video stills, big confident type, colour from her content rather than UI decoration), and asked that it be "engaging and interactive and really stand out for a creative marketing role".
 - 2026-10-07: the owner found near-black "too dark" and chose a deep **plum** ground from five rendered options (plum, teal, oxblood, forest, indigo).
 - 2026-10-07: the owner asked to use https://josie-pivaral-portfolio.my.canva.site/work as design inspiration and to section the portfolio by topic. She chose "Plum + cream" and the "Polished middle" level: elegant serif section titles ("video."), a topic index, phone frames and cream callout notes, with no clip-art stickers or tilted collage.
+- 2026-10-22: the owner found the dark plum "too much" and asked for a **cream background with very dark brown text**. Plum is retired; the fonts, layout and Polished-middle level stay.
 - Specific complaints to never repeat: too many fonts and sizes; repeated content (the same email, links or roles shown twice on one page).
 
 ## Evidence on Hand
