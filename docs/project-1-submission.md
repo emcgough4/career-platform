@@ -4,7 +4,7 @@
 | --- | --- |
 | Repository | https://github.com/emcgough4/career-platform |
 | Live site | https://elliemcgough.me |
-| Final commit | **To fill in at submission** |
+| Final commit | [`43456c7`](https://github.com/emcgough4/career-platform/commit/43456c7) |
 
 Items marked **Not yet recorded** are open. `TASKS.md` lists what closes each one.
 

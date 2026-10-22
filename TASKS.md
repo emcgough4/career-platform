@@ -84,7 +84,8 @@ Found in a repository audit on 2026-10-20 against the Project 1 requirements. Ea
 
 ## 8. Engineering record
 
-- [ ] Create `docs/project-1-submission.md` with the repo URL, live URL, final commit SHA and the eight link groups
+- [x] Create `docs/project-1-submission.md` with the repo URL, live URL, final commit SHA and the eight link groups
+  > **2026-10-22:** Final commit `43456c7`. The items it marks **Not yet recorded** are the ones that couldn't be closed (Azure VM off, Railway not deploying).
 - [x] Add Azure and Railway architecture diagrams with locations, protocols, ports, data flow, email and analytics paths — README or a linked diagram file
   > **2026-10-21:** README "Architecture" (two Mermaid diagrams).
 - [x] Add a rollback section for code and data — README
