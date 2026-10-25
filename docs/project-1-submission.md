@@ -4,7 +4,7 @@
 | --- | --- |
 | Repository | https://github.com/emcgough4/career-platform |
 | Live site | https://elliemcgough.me |
-| Final commit | This commit. The next commit writes its SHA here. |
+| Final commit | [`215b975`](https://github.com/emcgough4/career-platform/commit/215b975) |
 
 Items marked **Not yet recorded** are open. `TASKS.md` lists what closes each one.
 
