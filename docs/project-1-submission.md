@@ -4,11 +4,13 @@
 | --- | --- |
 | Repository | https://github.com/emcgough4/career-platform |
 | Live site | https://elliemcgough.me |
-| Final commit | [`43456c7`](https://github.com/emcgough4/career-platform/commit/43456c7) |
+| Final commit | This commit. The next commit writes its SHA here. |
 
 Items marked **Not yet recorded** are open. `TASKS.md` lists what closes each one.
 
-**Note:** not every gap could be fixed, because of problems with Railway on 2026-10-21. The Railway-dependent checks (the snapshot refresh, the live recovery check, and deploying the 503 change) are still open. [`TASKS.md`](../TASKS.md) lists them.
+The only commit after the final commit writes its SHA into this file. It changes nothing else.
+
+**Note:** not every gap could be closed. The Azure VM is shut off, and Railway had problems on 2026-10-21. Section 9 lists what I could and couldn't verify.
 
 ## 1. README, original spec and plans
 
@@ -52,6 +54,7 @@ Items marked **Not yet recorded** are open. `TASKS.md` lists what closes each on
 
 - Commit, Railway deployment and live result: [railway-deploy.md](evidence/railway-deploy.md). [`839b0c0`](https://github.com/emcgough4/career-platform/commit/839b0c0) → deployment `3ddcbf11` → GA4 tag live, checked 2026-10-22
 - Recovery explanation: [README "Rollback"](../README.md#rollback)
+- 503 database-failure page and refreshed snapshot: live since 2026-10-24 in deployment `8d5efc20`, which came from `railway up` rather than GitHub. The running files match [`4f9fdc8`](https://github.com/emcgough4/career-platform/commit/4f9fdc8): [railway-deploy.md](evidence/railway-deploy.md) "Update, 2026-10-25"
 
 ## 6. Zoho email
 
@@ -76,3 +79,23 @@ Items marked **Not yet recorded** are open. `TASKS.md` lists what closes each on
 - Costs, credits, expiration dates and cleanup: [README "Costs, credits and cleanup"](../README.md#costs-credits-and-cleanup)
 - Investigated failures table (symptom, checks, repair, repeated check): [README "Investigated failures"](../README.md#investigated-failures)
 - Remaining limitations: [README "Limitations"](../README.md#limitations)
+
+## 9. Final check, 2026-10-25 21:28 UTC
+
+**Verified**
+
+- The repository opens at https://github.com/emcgough4/career-platform, and `main` matches my local branch.
+- The site serves the reviewed version. Every file in `app/`, `templates/`, `static/`, `data/`, `alembic/` and `scripts/` in the running Railway container matches the repo (56 files, `sha256sum` over `railway ssh`). The commits after `4f9fdc8` change only docs.
+- `/` redirects (307) to `/about`. `/about`, `/resume`, `/portfolio`, `/contact` and `/privacy` return 200, served from the database, not the fallback. `/health` returns `{"status":"ok"}`.
+- `http://www` and `https://www` redirect (301) to `https://elliemcgough.me/`. The certificate is Let's Encrypt for `elliemcgough.me` and expires 2027-01-06.
+- MX (Zoho ×3), SPF and DMARC still resolve as recorded, checked against 8.8.8.8.
+- The GA4 tag appears once on the live page.
+- All 48 tests pass locally.
+
+**Not verified**
+
+- Controlled Azure VM restart, and the Azure Nginx HTTPS server block: the VM is shut off.
+- A real change to the original data that seed scripts couldn't reproduce: missing (README "How current data was preserved").
+- The 503 page and recovery after the database comes back, on the live site: never triggered live. There's no recovery test either; only the fallback is tested.
+- The live deployment came from `railway up`, not GitHub autodeploy, so Railway records no commit hash for it. The file match above is the link to the commit.
+- Email sending and receiving, and GA4 Realtime, weren't re-tested today. The evidence dates from 2026-10-15 ([ex06.md](evidence/ex06.md)). The Gmail spam result is still unresolved.

@@ -40,3 +40,16 @@ The tag appears exactly once on the live page, which matches the test. GA4 Realt
 ## Pushes not yet deployed
 
 [`7a10530`](https://github.com/emcgough4/career-platform/commit/7a10530) (the 503 database-failure page) and [`d8b6985`](https://github.com/emcgough4/career-platform/commit/d8b6985) (docs) were pushed on 2026-10-21. As of this check, Railway had no deployment for either, because Railway was having problems at the time. The live site still runs `a2129dc`, so the 503 behavior is tested locally but not live.
+
+## Update, 2026-10-25 21:28 UTC
+
+The 503 change and the refreshed snapshot are now live, but they did not arrive through GitHub autodeploy:
+
+| Deployment ID | Status | Created (UTC) | Source |
+| --- | --- | --- | --- |
+| `8c8479d1-8b72-4420-ae6a-2a3e0096d6d3` | REMOVED (replaced) | 2026-10-24 00:20:31 | GitHub push of `4f9fdc8` |
+| `8d5efc20-c352-409e-8085-2e32157b57a8` | SUCCESS | 2026-10-24 00:26:16 | `railway up` from the local tree (no commit hash) |
+
+Because `8d5efc20` has no commit hash, I checked the running container directly. `railway ssh` ran `sha256sum` over every file in `app/`, `templates/`, `static/`, `data/`, `alembic/` and `scripts/`, and all 56 matched the same files at `4f9fdc8`. The live `/static/css/styles.css` and `/static/js/site.js` are byte-identical to the repo, `/health` returns `{"status":"ok"}`, and `/about` doesn't show the fallback notice.
+
+What this doesn't show: the 503 page itself has not been triggered on the live site. Only the tests cover it.

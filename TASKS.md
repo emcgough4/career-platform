@@ -8,9 +8,12 @@ Found in a repository audit on 2026-10-20 against the Project 1 requirements. Ea
 >
 > The 503 fallback code and its tests are done (48 passing) and pushed, but Railway hadn't deployed that push as of 2026-10-22 18:34 UTC ([railway-deploy.md](docs/evidence/railway-deploy.md)). The Azure items can't be closed either, because the VM is shut off.
 
+> **2026-10-25 update:** the snapshot was refreshed in `4f9fdc8`, and the 503 change is live (deployment `8d5efc20`, via `railway up`; the running files match `4f9fdc8`). Still open: a recovery test and a dated live recovery check, the controlled VM restart, the Azure Nginx HTTPS block, and the real data change.
+
 ## 1. Profile and project data
 
-- [ ] On a database failure, show the real profile plus "Projects temporarily unavailable" with HTTP 503 instead of the 200 snapshot fallback — `app/services/profile_service.py`, routes, `templates/portfolio.html`, and update `tests/test_fallback.py`
+- [x] On a database failure, show the real profile plus "Projects temporarily unavailable" with HTTP 503 instead of the 200 snapshot fallback — `app/services/profile_service.py`, routes, `templates/portfolio.html`, and update `tests/test_fallback.py`
+  > **2026-10-25:** Code in `7a10530`, snapshot refreshed in `4f9fdc8`. Live in deployment `8d5efc20`; the running files match `4f9fdc8` ([railway-deploy.md](docs/evidence/railway-deploy.md)). The 503 page hasn't been triggered live.
 - [ ] Prove projects return after the database recovers, without an app restart — new test plus a dated live check
 - [ ] Explain the initial database engine choice (SQLite) and why — README decisions section
 - [x] Confirm live content has education, professional links, labeled placeholders, and a "this website, in progress" project entry — check the live `/about`, `/resume`, `/portfolio`

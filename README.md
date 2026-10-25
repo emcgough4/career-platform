@@ -276,7 +276,7 @@ The VM was kept running as the rollback target. The undo was to put the A record
 
 ## Limitations
 
-- **Fallback snapshot.** When the database is down, pages show the profile from `data/public_profile_snapshot.json` and return 503. That file must be refreshed by hand after profile edits, or an outage shows old details. It is still the placeholder ("Your Name"): the refresh needs a connection to Railway, which was having problems on 2026-10-21.
+- **Fallback snapshot.** When the database is down, pages show the profile from `data/public_profile_snapshot.json` and return 503. That file must be refreshed by hand after profile edits, or an outage shows old details. It was refreshed from the live profile in [`4f9fdc8`](https://github.com/emcgough4/career-platform/commit/4f9fdc8) (projects left empty, so an outage says "Projects temporarily unavailable"). A live outage and recovery has not been tested.
 - **`/health` doesn't check the database.** A deploy with a broken database connection still passes Railway's health check.
 - **Railway trial.** It ends after 30 days or $5 of usage, and allows one custom domain, so `www` relies on a Cloudflare redirect. `railway.json` stops working on 2026-12-01. The site moves to AWS after the midterm.
 - **No verified database backups.** Whether Railway backs up this Postgres service on the trial isn't confirmed.
