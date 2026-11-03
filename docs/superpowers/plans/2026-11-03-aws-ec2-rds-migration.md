@@ -1,14 +1,20 @@
 # AWS EC2 and RDS Migration Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. As each section finishes, tick its boxes and add an `> **Executed YYYY-MM-DD: …**` note under it, the same way the earlier plans do.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. As each section finishes, tick its boxes and add an `> **Executed YYYY-MM-DD: …**` note under it, the same way the earlier plans do. Also log every deviation from the plan in `docs/migration-notes.md` (course guide, section 9).
 
-**Goal:** Serve elliemcgough.me from an EC2 instance in us-east-1, backed by a Single-AZ RDS PostgreSQL 18 database, with Railway kept running unchanged as the rollback.
+**Goal:** Serve elliemcgough.me from an EC2 instance in us-east-1, backed by a Single-AZ RDS PostgreSQL 18 database. Test it first at `aws.elliemcgough.me`, with Railway kept running unchanged as the rollback.
 
-**Architecture:** The app code stays the same FastAPI + SQLAlchemy app. On one `t3.small` Ubuntu 24.04 instance, nginx terminates HTTPS (Certbot, Let's Encrypt) and proxies to uvicorn on `127.0.0.1:8000`, run by systemd as an unprivileged `career-app` user. The app connects to a private, encrypted `db.t4g.micro` RDS instance over TLS (`verify-full`) as a read-only role. Migrations run as the owner role, only from a deploy script. The data moves once, with a `pg_dump` from Railway restored from the laptop through an SSH tunnel via EC2. Then Cloudflare's apex record moves from Railway to the instance's Elastic IP.
+**Architecture:** The app code stays the same FastAPI + SQLAlchemy app. On one `t3.micro` Ubuntu 26.04 instance, nginx terminates HTTPS (Certbot, Let's Encrypt) and proxies to uvicorn on `127.0.0.1:8000`, run by systemd as an unprivileged `career-app` user. The app connects to a private, encrypted `db.t4g.micro` RDS instance over TLS (`verify-full`) as a read-only role. Migrations run as the owner role, only from a deploy script. The data moves once: a `pg_dump` from Railway is restored **from the EC2 instance** with Ubuntu 26.04's Postgres 18 client. The copy is tested at `aws.elliemcgough.me`, then Cloudflare's apex record moves from Railway to the instance's Elastic IP.
 
-**Tech Stack:** AWS CLI v2 (profile `isba-4775`), EC2, Elastic IP, RDS for PostgreSQL 18.6, Ubuntu 24.04, nginx, Certbot, systemd, uv 0.12.19, Python 3.12, FastAPI, uvicorn, SQLAlchemy 2.1, Alembic, psycopg 3, Homebrew `postgresql@18` (laptop), Railway CLI, Cloudflare DNS.
+**Tech Stack:** AWS CLI v2 (profile `isba-4775`), EC2, Elastic IP, RDS for PostgreSQL 18.6, Ubuntu 26.04 (`postgresql-client` 18, system `python3`), nginx, Certbot, systemd, uv 0.12.19, FastAPI, uvicorn, SQLAlchemy 2.1, Alembic, psycopg 3, Railway CLI, Cloudflare DNS and the `cf` CLI.
 
-**Spec:** The request in chat on 2026-11-03: "Look at my app and help me plan its move to AWS. Use EC2 for the app and a Single-AZ RDS PostgreSQL database. Work on a new branch so Railway doesn't redeploy from main. Don't create anything yet." Decisions from the interview that day: the domain moves to AWS; the account is the user's alone; the cutover allows a few minutes of downtime (Certbot HTTP challenge after the DNS flip). The constraints come from the course policy `LMU-ISBA/isba-4775-fa26/guides/aws-ec2-deployment-policy.json`.
+**Spec:** The request in chat on 2026-11-03: "Look at my app and help me plan its move to AWS. Use EC2 for the app and a Single-AZ RDS PostgreSQL database. Work on a new branch so Railway doesn't redeploy from main. Don't create anything yet." Decisions from the interview that day:
+- The domain moves to AWS.
+- The account is the user's alone.
+- The cutover allows a few minutes of downtime.
+- Later the same day: **"follow course's guide"**, meaning `LMU-ISBA/isba-4775-fa26/guides/aws-migration.md` (sections 7–12) for sizing, image, restore path, the test subdomain and the merge to `main`.
+
+The constraints come from the course policy `guides/aws-ec2-deployment-policy.json`.
 
 ## What's there today (found 2026-11-03, read-only)
 
@@ -18,40 +24,53 @@
 | Railway DB | PostgreSQL 18.6, private network only. Backup method: `railway ssh -s Postgres` → `pg_dump -Fc` (memory `railway-postgres-backup-method`). Last dump: `backups/railway-postgres-20261029T215819Z.dump` |
 | App | 6 GET routes plus `/health` (no DB). **No write paths**: no POST/PUT/DELETE, no `commit()`. On a DB error the pages return **503** with the snapshot and the marker `<!-- Showing the latest saved profile snapshot. -->` |
 | Config | `DATABASE_URL` → `app/config.py` (`postgres(ql)://` rewritten to `postgresql+psycopg://`). `alembic/env.py` passes it to `config.set_main_option`, which is a configparser call, so a `%` in the URL (URL-encoded password) raises `ValueError` |
+| Python | `.python-version` is `3.12` (Railway reads it, so it stays). `uv.lock` has x86_64 Linux wheels for 3.12–3.14 for every compiled dependency (psycopg-binary, pydantic-core, httptools, uvloop, watchfiles) |
 | Railway-only pieces | `railway.json` (preDeploy `alembic upgrade head`, `--forwarded-allow-ips=*`, `/health` check, restart policy), `railpack.json`, `tests/test_railway_config.py`. **They stay as they are** so Railway keeps working as the rollback |
-| AWS account `909096719723` | Empty: default VPC `vpc-02ed278a349b93372` (`172.31.0.0/16`), six default public subnets (us-east-1a `subnet-091fafd64394acaf2`, b `subnet-0dbd1bce00600192f`, c `subnet-0b1960fc8f1fe3b0d`, d `subnet-0c624206cd7096d5f`, e `subnet-088369ecdfbb283bb`, f `subnet-006a7c5373439e854`). No instances, DBs, key pairs or EIPs, and only the `default` SG. RDS offers postgres 18.1 to 18.6 |
-| Laptop | `uv 0.12.19`, Homebrew `postgresql@18 18.6_1` (keg-only: `/opt/homebrew/opt/postgresql@18/bin`), `~/.ssh/isba4775_azure` (Azure key, not reused). `env/` and `backups/` are git-ignored |
+| AWS account `909096719723` | **Free plan** (confirmed by `FreeTierRestrictionError`, Section 3 Step 5). Default VPC `vpc-02ed278a349b93372` (`172.31.0.0/16`), six default public subnets (us-east-1a `subnet-091fafd64394acaf2`, b `subnet-0dbd1bce00600192f`, c `subnet-0b1960fc8f1fe3b0d`, d `subnet-0c624206cd7096d5f`, e `subnet-088369ecdfbb283bb`, f `subnet-006a7c5373439e854`) |
+| Ubuntu image | SSM `/aws/service/canonical/ubuntu/server/26.04/stable/current/amd64/hvm/ebs-gp3/ami-id` was `ami-0bfc5cae5711ffac8` (`ubuntu-resolute-26.04-amd64-server-20261028`, owner Canonical `099720109477`, root `/dev/sda1`, 8 GB default, `UsageOperation: RunInstances`, so not Pro-billed). Look it up again at launch |
+| Laptop | `uv 0.12.19`, Homebrew `postgresql@18 18.6_1`, `~/.ssh/isba4775_azure` (Azure key, not reused). `env/` and `backups/` are git-ignored |
 | Repo | `https://github.com/emcgough4/career-platform`, public |
 
-## Policy rules this plan must satisfy
-
-From the course policy. Each one is handled by a flag in Section 3:
+## Policy and Free-plan rules this plan must satisfy
 
 - Region `us-east-1` only. EC2 `t3.micro`/`t3.small` only. `HttpTokens=required` at launch.
 - RDS `db.t3.micro`/`db.t4g.micro`, not Multi-AZ, ≤ 20 GB, encrypted, never publicly accessible. **Pass `--storage-encrypted` and `--no-publicly-accessible` explicitly**: the policy's Denies use `BoolIfExists`, so leaving the flags out can be denied.
 - Not allowed: VPC changes, `ModifyInstanceAttribute` (no resizing, no swapping security groups on a running instance), `CreateKeyPair` (import only), `iam:PassRole` (no instance role, so no Secrets Manager, SSM Session Manager or CloudWatch agent), and Secrets Manager–managed RDS passwords.
+- Free plan: RDS backup retention of **1 day at most** (found in Section 3 Step 5). Don't upgrade the account plan (course guide, section 1).
 
 ## Global Constraints
 
 - Every AWS command runs with `export AWS_PROFILE=isba-4775 AWS_REGION=us-east-1` set first. (zsh doesn't word-split `$VAR`, so don't put flags in a variable.)
-- Names: key pair `isba4775-aws`, SGs `career-platform-web` and `career-platform-db`, instance `Name=career-platform`, EIP `Name=career-platform`, DB subnet group and DB instance `career-platform-db`, database `career_platform`, RDS owner `career_admin`, app role `career_app`.
+- Names:
+  - Key pair `isba4775-aws`.
+  - Security groups `career-platform-web` and `career-platform-db`.
+  - Instance and Elastic IP: tag `Name=career-platform`.
+  - DB subnet group and DB instance `career-platform-db`.
+  - Database `career_platform`, owner role `career_admin`, app role `career_app`.
+  - Test hostname `aws.elliemcgough.me`.
+- Instance: **`t3.micro`, Ubuntu Server 26.04 LTS (x86_64), On-Demand, Standard CPU credits, 20 GB encrypted gp3, IMDSv2 required** (course guide, section 8).
 - AZ `us-east-1a` for both the instance and the database (no cross-AZ traffic).
-- Values found at run time are written into the Executed notes as `<AMI_ID>`, `<INSTANCE_ID>`, `<WEB_SG>`, `<DB_SG>`, `<EIP>`, `<EIP_ALLOC>`, `<RDS_HOST>`, `<HOME_IP>`, `<SCHOOL_IP>`. IDs and the public IP may be recorded. **Passwords, full `DATABASE_URL`s and dumps never go into the repo, the plan or chat.**
-- Passwords: `openssl rand -hex 24` (hex only, so nothing needs URL-encoding). Stored on the laptop in `~/.config/career-platform/rds-master-password` and `~/.config/career-platform/rds-app-password`, mode 600.
-- Server layout: code in `/opt/career-platform` (owner `ubuntu`). App env `/etc/career-platform/app.env` (`root:career-app`, 0640). Migration env `/etc/career-platform/migrate.env` (`ubuntu:ubuntu`, 0600). RDS CA `/etc/ssl/certs/rds-global-bundle.pem`.
-- App `DATABASE_URL` query string: `?sslmode=verify-full&sslrootcert=/etc/ssl/certs/rds-global-bundle.pem&connect_timeout=5`.
-- Python comes from Ubuntu's `/usr/bin/python3.12` (`UV_PYTHON_PREFERENCE=only-system`), never a uv-managed Python under `~ubuntu`, because `career-app` can't read `/home/ubuntu`.
-- Code work happens on branch `aws-ec2-rds-migration`. **Never push to `main`, and don't open a PR** (a PR can trigger a Railway preview deploy). Ask before the one `git push -u origin aws-ec2-rds-migration` in Section 2.
+- Values found at run time are written into the Executed notes as `<AMI_ID>`, `<INSTANCE_ID>`, `<WEB_SG>`, `<DB_SG>`, `<EIP>`, `<EIP_ALLOC>`, `<RDS_HOST>`. IDs and the Elastic IP may be recorded; `<HOME_IP>` and `<SCHOOL_IP>` are not. **Passwords, full `DATABASE_URL`s and dumps never go into the repo, the plan or chat.**
+- Passwords: `openssl rand -hex 24` (hex only, so nothing needs URL-encoding). Stored on the laptop in `~/.config/career-platform/rds-master-password` and `~/.config/career-platform/rds-app-password`, mode 600, outside the repo.
+- Server layout:
+  - Code: `/opt/career-platform` (owner `ubuntu`).
+  - App env: `/etc/career-platform/app.env` (`root:career-app`, 0640).
+  - Migration env: `/etc/career-platform/migrate.env` (`ubuntu:ubuntu`, 0600).
+  - RDS CA: `/etc/ssl/certs/rds-global-bundle.pem`.
+- Both `DATABASE_URL`s end in `?sslmode=verify-full&sslrootcert=/etc/ssl/certs/rds-global-bundle.pem&connect_timeout=5`. libpq tools (`psql`, `pg_restore`) accept the same URL.
+- Python comes from Ubuntu's `/usr/bin/python3` (`UV_PYTHON=/usr/bin/python3 UV_PYTHON_PREFERENCE=only-system`), overriding `.python-version`. Never use a uv-managed Python under `~ubuntu`, because `career-app` can't read `/home/ubuntu`.
+- Code work happens on branch `aws-ec2-rds-migration`. **Don't push to `main` or open a PR before cutover** (a PR can trigger a Railway preview deploy). Ask before the one `git push -u origin aws-ec2-rds-migration` in Section 2. The merge to `main` comes after cutover (Section 9).
+- Don't run the Azure deploy steps or `scripts/*.sql` on AWS (course guide, section 9).
 - Railway's service, variables, custom domain and `railway.json` are not changed by this plan.
-- **Content freeze** from Section 5 Step 1 until Section 7 is done. No edits to Railway's database in that time.
+- **Content freeze** from Section 5 Step 1 until Section 8 is done. No edits to Railway's database in that time.
 - Local tests keep using SQLite. No test needs AWS or Postgres.
 
 ## Review Focus
 
 - **`%` in a database URL crashes Alembic.** `set_main_option` is configparser, and `%40` reads as interpolation. Task 2 escapes it and tests offline migration with an encoded password.
-- **uvicorn trusting every forwarded header.** Railway needs `--forwarded-allow-ips=*`; on EC2 it lets anyone fake `X-Forwarded-Proto` and the client IP. Task 1 tests that the unit binds `127.0.0.1` and doesn't pass that flag. Section 7 checks `og:image` is `https://`.
-- **A DB outage that hangs instead of falling back.** With no `connect_timeout`, a blocked RDS connection waits about 2 minutes per request. Task 2 pins the URL query. Section 6 Step 4 blocks the DB and expects a 503 with the marker within a few seconds, then recovery once it's unblocked.
-- **The app user can't read the Python.** If uv downloads its own Python into `~ubuntu/.local`, `career-app` gets "permission denied" at start. Task 1's deploy script sets `UV_PYTHON_PREFERENCE=only-system`. Section 4 Step 3 checks `readlink -f .venv/bin/python` is `/usr/bin/python3.12`.
+- **uvicorn trusting every forwarded header.** Railway needs `--forwarded-allow-ips=*`; on EC2 it lets anyone fake `X-Forwarded-Proto` and the client IP. Task 1 tests that the unit binds `127.0.0.1` and doesn't pass that flag. Sections 7 and 8 check `og:image` is `https://`.
+- **A DB outage that hangs instead of falling back.** With no `connect_timeout`, a blocked RDS connection waits about 2 minutes per request. Task 2 pins the URL query. Section 7 Step 4 blocks the DB and expects a 503 with the marker within a few seconds, then recovery once it's unblocked.
+- **The wrong Python, or one the app user can't read.** `.python-version` asks for 3.12, which 26.04 may not ship. Without the override, uv either fails or downloads 3.12 into `~ubuntu/.local`, and `career-app` then gets "permission denied" at start. Task 1's deploy script sets `UV_PYTHON=/usr/bin/python3` and `UV_PYTHON_PREFERENCE=only-system`. Section 4 Step 3 checks `readlink -f .venv/bin/python` starts with `/usr/bin/python3`.
 - **Certbot editing a tracked file.** `certbot --nginx` rewrites the site config. The config is copied into `/etc/nginx`, not symlinked, so the repo copy on the server stays clean (`git status` checked in Section 7).
 
 ---
@@ -68,9 +87,9 @@ From the course policy. Each one is handled by a flag in Section 3:
 
 **Interfaces:**
 - Consumes: `/health` route (`app/main.py`), env file paths from Global Constraints.
-- Produces: `deploy/aws/deploy.sh [git-ref]`, run on the server as `ubuntu` from any directory. It exits 0 only if `/health` returns `{"status":"ok"}` and `/about` returns 200 (not 503) after the restart. Sections 4 and 6 call it.
+- Produces: `deploy/aws/deploy.sh [git-ref]`, run on the server as `ubuntu` from any directory. It exits 0 only if `/health` returns `{"status":"ok"}` and `/about` returns 200 (not 503) after the restart. Sections 6 and 9 call it.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_aws_deploy_config.py`. They read the three files as text from `REPO_ROOT / "deploy" / "aws"`:
+- [ ] **Step 1: Write the failing tests** in `tests/test_aws_deploy_config.py`. They read the three files as text from `DEPLOY = REPO_ROOT / "deploy" / "aws"` through a small `read(name)` helper:
 
 ```python
 def test_unit_runs_uvicorn_on_loopback_without_trusting_all_proxies():
@@ -87,10 +106,10 @@ def test_unit_runs_as_app_user_with_app_env():
         assert line in unit.splitlines()
     assert "migrate.env" not in unit
 
-def test_nginx_proxies_to_loopback_for_the_apex():
+def test_nginx_proxies_to_loopback_for_test_and_real_names():
     conf = read("nginx-career-platform.conf")
     assert "listen 80 default_server;" in conf
-    assert "server_name elliemcgough.me;" in conf
+    assert "server_name aws.elliemcgough.me elliemcgough.me;" in conf
     assert "proxy_pass http://127.0.0.1:8000;" in conf
     for header in ["Host $host", "X-Forwarded-For $proxy_add_x_forwarded_for", "X-Forwarded-Proto $scheme"]:
         assert f"proxy_set_header {header};" in conf
@@ -98,8 +117,9 @@ def test_nginx_proxies_to_loopback_for_the_apex():
 def test_deploy_script_syncs_then_migrates_as_owner_then_restarts_then_checks():
     script = read("deploy.sh")
     assert script.startswith("#!/usr/bin/env bash\nset -euo pipefail")
-    steps = ["UV_PYTHON_PREFERENCE=only-system", "uv sync --locked", "/etc/career-platform/migrate.env",
-             "alembic upgrade head", "systemctl restart career-platform", "/health", "/about"]
+    steps = ["UV_PYTHON=/usr/bin/python3", "UV_PYTHON_PREFERENCE=only-system", "uv sync --locked",
+             "/etc/career-platform/migrate.env", "alembic upgrade head", "systemctl restart career-platform",
+             "/health", "/about"]
     positions = [script.index(step) for step in steps]
     assert positions == sorted(positions)
 
@@ -113,11 +133,11 @@ Run: `uv run pytest tests/test_aws_deploy_config.py -v`
 Expected: 5 FAIL with `FileNotFoundError` (no `deploy/aws/`).
 
 - [ ] **Step 3: Write the three files**
-  - `career-platform.service`: the Azure unit from `2026-10-01-operate-the-vm.md` Task 2, with the user, paths and env file above, `After=network-online.target` and `Wants=network-online.target`, and `RestartSec=3`.
-  - `nginx-career-platform.conf`: one `server` block on port 80 (`listen 80 default_server;` and `listen [::]:80 default_server;`, `server_name elliemcgough.me;`), with `location /` proxying as in the tests. Certbot adds the 443 block in Section 7. `default_server` lets Section 6 test by IP before DNS moves.
+  - `career-platform.service`: the Azure unit from `2026-10-01-operate-the-vm.md` Task 2, with the user, paths and env file above, `After=network-online.target` and `Wants=network-online.target`, and `RestartSec=3`. Two workers: a `t3.micro` has 2 vCPUs, and the Azure VM ran two workers in about 140 MB of RAM.
+  - `nginx-career-platform.conf`: one `server` block on port 80 (`listen 80 default_server;`, `listen [::]:80 default_server;`, `server_name aws.elliemcgough.me elliemcgough.me;`), with `location /` proxying as in the tests. Certbot adds the 443 block in Section 7.
   - `deploy.sh`:
     1. `cd /opt/career-platform`, then `git fetch origin` and `git checkout --detach "${1:-origin/aws-ec2-rds-migration}"`.
-    2. `UV_PYTHON_PREFERENCE=only-system uv sync --locked`.
+    2. `UV_PYTHON=/usr/bin/python3 UV_PYTHON_PREFERENCE=only-system uv sync --locked`.
     3. In a subshell: `set -a; . /etc/career-platform/migrate.env; set +a; .venv/bin/alembic upgrade head`.
     4. `sudo systemctl restart career-platform`.
     5. Poll `curl -fsS http://127.0.0.1:8000/health` up to 15 times, one second apart.
@@ -126,7 +146,7 @@ Expected: 5 FAIL with `FileNotFoundError` (no `deploy/aws/`).
 - [ ] **Step 4: Run the tests to see them pass**
 
 Run: `uv run pytest -q`
-Expected: all pass (the existing 48 plus 5 new).
+Expected: all pass (5 new).
 
 - [ ] **Step 5: Commit**
 
@@ -186,7 +206,7 @@ Check: `git log origin/main..origin/aws-ec2-rds-migration --oneline` lists this 
 
 ## 3. AWS resources (laptop, AWS CLI)
 
-Gate: Sections 1–2 done. **Everything from here on is billed.** Ask the user before Step 3. Each step's Undo is listed again in reverse order under Rollback.
+**Everything here is billed against the Free plan credits.** Ask the user before Step 3. Each step's Undo is listed again in reverse order under Rollback.
 
 - [ ] **Step 1: Generate and import the SSH key, and generate passwords**
   - **Run:**
@@ -224,26 +244,27 @@ Gate: Sections 1–2 done. **Everything from here on is billed.** Ask the user b
 - [ ] **Step 3: Launch the instance (dry run first)**
   - **Run:**
     ```bash
-    AMI_ID=$(aws ssm get-parameter --name /aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id --query Parameter.Value --output text)
-    aws ec2 run-instances --dry-run --image-id "$AMI_ID" --instance-type t3.small --key-name isba4775-aws \
-      --subnet-id subnet-091fafd64394acaf2 --security-group-ids <WEB_SG> \
+    AMI_ID=$(aws ssm get-parameter --name /aws/service/canonical/ubuntu/server/26.04/stable/current/amd64/hvm/ebs-gp3/ami-id --query Parameter.Value --output text)
+    aws ec2 describe-images --image-ids "$AMI_ID" --query 'Images[0].[Name,OwnerId,RootDeviceName,UsageOperation]' --output text
+    aws ec2 run-instances --dry-run --image-id "$AMI_ID" --instance-type t3.micro --key-name isba4775-aws \
+      --subnet-id subnet-091fafd64394acaf2 --security-group-ids sg-0e35c236b5e8b76c1 \
       --metadata-options HttpTokens=required,HttpEndpoint=enabled,HttpPutResponseHopLimit=1 \
       --credit-specification CpuCredits=standard \
-      --block-device-mappings 'DeviceName=/dev/sda1,Ebs={VolumeSize=10,VolumeType=gp3,Encrypted=true,DeleteOnTermination=true}' \
+      --block-device-mappings 'DeviceName=/dev/sda1,Ebs={VolumeSize=20,VolumeType=gp3,Encrypted=true,DeleteOnTermination=true}' \
       --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=career-platform}]' 'ResourceType=volume,Tags=[{Key=Name,Value=career-platform-root}]'
     ```
-    The dry run should print `DryRunOperation`. Then rerun the same command without `--dry-run`, adding `--query 'Instances[0].InstanceId' --output text`, and then run `aws ec2 wait instance-status-ok --instance-ids <INSTANCE_ID>`.
-  - **Why:**
-    - `t3.small` gives 2 GiB of RAM; the type can't be changed later under the policy.
-    - `CpuCredits=standard` avoids unlimited-credit charges.
-    - The encrypted 10 GB root volume leaves room for the venv and logs.
-  - **Check:** `describe-instances` shows `t3.small`, `running`, `MetadataOptions.HttpTokens: required`, AZ `us-east-1a`. `describe-instance-credit-specifications` shows `standard`. If `Encrypted=true` is denied (KMS), record it and rerun with `Encrypted=false`.
+    1. Check the image: `describe-images` must show a name containing `ubuntu-resolute-26.04-amd64-server` (not `pro-server`), owner `099720109477`, root `/dev/sda1` and `RunInstances`.
+    2. The dry run should print `DryRunOperation`.
+    3. Rerun the same command without `--dry-run`, adding `--query 'Instances[0].InstanceId' --output text`.
+    4. Run `aws ec2 wait instance-status-ok --instance-ids <INSTANCE_ID>`.
+  - **Before first SSH:** compare the host key fingerprints in `aws ec2 get-console-output --instance-id <INSTANCE_ID> --latest --output text` (the `-----BEGIN SSH HOST KEY FINGERPRINTS-----` block) with what `ssh` shows on first connect (course guide, section 8).
+  - **Check:** `describe-instances` shows `t3.micro`, `running`, `MetadataOptions.HttpTokens: required`, AZ `us-east-1a`, and a 20 GB encrypted root volume. `describe-instance-credit-specifications` shows `standard`. If `Encrypted=true` is denied (KMS), record it and rerun with `Encrypted=false`.
   - **Undo:** `aws ec2 terminate-instances --instance-ids <INSTANCE_ID>`
 
 - [ ] **Step 4: Elastic IP**
   - **Run:** `allocate-address --domain vpc --tag-specifications 'ResourceType=elastic-ip,Tags=[{Key=Name,Value=career-platform}]'`, then `associate-address --instance-id <INSTANCE_ID> --allocation-id <EIP_ALLOC>`.
-  - **Why:** The address survives stop and start, so the Cloudflare A record keeps working.
-  - **Check:** `ssh -i ~/.ssh/isba4775_aws ubuntu@<EIP> 'lsb_release -ds; curl -s -o /dev/null -w "%{http_code}\n" http://169.254.169.254/latest/meta-data/'` prints `Ubuntu 24.04…`, then `401` (IMDSv1 refused).
+  - **Why:** The address survives stop and start, so the Cloudflare records keep working. It bills while idle too, so release it at teardown.
+  - **Check:** `ssh -i ~/.ssh/isba4775_aws ubuntu@<EIP> 'lsb_release -ds; curl -s -o /dev/null -w "%{http_code}\n" http://169.254.169.254/latest/meta-data/'` prints `Ubuntu 26.04…`, then `401` (IMDSv1 refused).
   - **Undo:** `disassociate-address --association-id …`, then `release-address --allocation-id <EIP_ALLOC>`.
 
 - [x] **Step 5: DB subnet group and the RDS instance**
@@ -266,7 +287,7 @@ Gate: Sections 1–2 done. **Everything from here on is billed.** Ask the user b
     - 18.6 matches Railway, so the 18 dump restores as is.
     - `--deletion-protection` stops an accidental delete.
   - **Check:** `describe-db-instances --query 'DBInstances[0].[Endpoint.Address,EngineVersion,DBInstanceClass,MultiAZ,PubliclyAccessible,StorageEncrypted,AllocatedStorage,MaxAllocatedStorage]'` gives `<RDS_HOST>`, `18.6`, `db.t4g.micro`, `false`, `false`, `true`, `20`, `None`.
-  - **Undo:** Section 9 (teardown). Deletion protection must be turned off first.
+  - **Undo:** Section 10 (teardown). Deletion protection must be turned off first.
 
 > **Executed 2026-11-03: create request accepted. Not yet confirmed `available`.**
 > - **Subnet group:** `career-platform-db` covers all six default subnets (us-east-1a to f), status `Complete`.
@@ -285,12 +306,18 @@ Gate: Sections 1–2 done. **Everything from here on is billed.** Ask the user b
 - [ ] **Step 1: Packages, app user, uv**
   - **Run:**
     ```bash
-    sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get install -y git nginx certbot python3-certbot-nginx
+    sudo apt-get update && sudo apt-get -y upgrade
+    sudo apt-get install -y git nginx certbot python3-certbot-nginx postgresql-client
     sudo useradd --system --no-create-home --shell /usr/sbin/nologin career-app
     curl -LsSf https://astral.sh/uv/0.12.19/install.sh | sh && source ~/.local/bin/env
     [ -f /var/run/reboot-required ] && sudo reboot
     ```
-  - **Check:** `uv --version` prints `uv 0.12.19`, `id career-app` works, `nginx -v` and `certbot --version` print versions.
+  - **Check:**
+    - `pg_restore --version` prints `18.x` (it must be 18 or newer to read Railway's dump).
+    - `python3 --version` prints a version from 3.12 to 3.14. Record it.
+    - `uv --version` prints `uv 0.12.19`.
+    - `id career-app` works.
+    - `nginx -v` and `certbot --version` print versions.
   - **Undo:** `sudo userdel career-app`. The packages can stay.
 
 - [ ] **Step 2: Clone the branch and fetch the RDS CA bundle**
@@ -304,11 +331,26 @@ Gate: Sections 1–2 done. **Everything from here on is billed.** Ask the user b
   - **Undo:** `sudo rm -rf /opt/career-platform /etc/ssl/certs/rds-global-bundle.pem`
 
 - [ ] **Step 3: Python environment from the lock file and the system Python**
-  - **Run:** `cd /opt/career-platform && UV_PYTHON_PREFERENCE=only-system uv sync --locked && uv run pytest -q`
-  - **Check:** `readlink -f .venv/bin/python` is `/usr/bin/python3.12`. All tests pass (they use SQLite). `sudo -u career-app /opt/career-platform/.venv/bin/python -c 'import app.main'` exits 0.
+  - **Run:** `cd /opt/career-platform && UV_PYTHON=/usr/bin/python3 UV_PYTHON_PREFERENCE=only-system uv sync --locked && uv run --no-sync pytest -q`
+  - **Check:**
+    - `readlink -f .venv/bin/python` starts with `/usr/bin/python3`.
+    - All tests pass (they use SQLite). If any fail only on the newer Python, stop and log it in `docs/migration-notes.md`.
+    - `sudo -u career-app /opt/career-platform/.venv/bin/python -c 'import app.main'` exits 0.
   - **Undo:** `rm -rf .venv`
 
-## 5. Data: Railway → RDS
+- [ ] **Step 4: Env files** (from the laptop, so passwords never appear in a terminal transcript)
+  - **Run:** Build two files in the scratchpad (mode 600) and pipe each over SSH into `sudo install`:
+    - `app.env`: `DATABASE_URL=postgresql://career_app:<app pw>@<RDS_HOST>:5432/career_platform?sslmode=verify-full&sslrootcert=/etc/ssl/certs/rds-global-bundle.pem&connect_timeout=5`
+    - `migrate.env`: the same URL with `career_admin` and the master password.
+
+    On the server: `sudo install -d -m 755 /etc/career-platform`. Install `app.env` with `-o root -g career-app -m 640` and `migrate.env` with `-o ubuntu -g ubuntu -m 600`. Then delete the scratchpad copies.
+  - **Check:**
+    - `sudo -u career-app cat /etc/career-platform/migrate.env` fails with `Permission denied`.
+    - `sudo -u career-app test -r /etc/career-platform/app.env && echo ok` prints `ok`.
+    - `(set -a; . /etc/career-platform/migrate.env; psql "$DATABASE_URL" -Atc 'select version(), ssl from pg_stat_ssl where pid = pg_backend_pid()')` prints `PostgreSQL 18.6…|t`, which proves verify-full TLS from EC2.
+  - **Undo:** `sudo rm -rf /etc/career-platform`
+
+## 5. Data: Railway → RDS, restored from EC2
 
 - [ ] **Step 1: Start the content freeze and take a fresh dump**
   - **Where:** laptop
@@ -316,56 +358,48 @@ Gate: Sections 1–2 done. **Everything from here on is billed.** Ask the user b
   - **Check:** The two sha256 values match. `/opt/homebrew/opt/postgresql@18/bin/pg_restore --list <dump> | grep -c 'TABLE DATA'` is 8 (seven tables plus `alembic_version`).
   - **Undo:** Read-only on Railway.
 
-- [ ] **Step 2: Open a tunnel to RDS through EC2**
-  - **Where:** laptop, in a second terminal
-  - **Run:** `ssh -i ~/.ssh/isba4775_aws -N -L 15432:<RDS_HOST>:5432 ubuntu@<EIP>`
-  - **Why:** RDS isn't public. Port 15432 avoids your local test Postgres on 5433. Use `sslmode=require` through the tunnel, because `verify-full` checks the hostname and the tunnel's hostname is `127.0.0.1`.
-  - **Check:** `PGPASSWORD=$(cat ~/.config/career-platform/rds-master-password) /opt/homebrew/opt/postgresql@18/bin/psql "host=127.0.0.1 port=15432 user=career_admin dbname=career_platform sslmode=require" -Atc 'select version(), ssl from pg_stat_ssl where pid = pg_backend_pid()'` prints `PostgreSQL 18.6…|t`.
-  - **Undo:** Ctrl-C the tunnel.
-
-- [ ] **Step 3: Restore, then create the read-only app role**
-  - **Where:** laptop, with the tunnel open
+- [ ] **Step 2: Copy the dump to EC2 and restore it into the empty database**
   - **Run:**
-    1. `pg_restore --no-owner --no-acl --exit-on-error -h 127.0.0.1 -p 15432 -U career_admin -d career_platform <dump>`, with `PGSSLMODE=require` and `PGPASSWORD` set from the file.
-    2. In `psql` with `-v app_pw="$(cat ~/.config/career-platform/rds-app-password)"`, run:
+    1. `scp -i ~/.ssh/isba4775_aws <dump> ubuntu@<EIP>:/home/ubuntu/railway.dump`, then `chmod 600 ~/railway.dump` on the server. `sha256sum` must match the laptop's `shasum -a 256`.
+    2. On the server: `(set -a; . /etc/career-platform/migrate.env; set +a; pg_restore --no-owner --no-acl --exit-on-error -d "$DATABASE_URL" ~/railway.dump)`
+  - **Why:**
+    - RDS isn't reachable from the laptop, so the restore runs on the instance (course guide, section 9).
+    - The target database is empty and the restore runs **before** any `alembic upgrade`, so Alembic later finds `0002` and does nothing.
+    - `--no-owner` is needed because Railway's tables belong to `postgres`, which doesn't exist on RDS.
+  - **Check:** `select version_num from alembic_version` is `0002_project_category`.
+  - **Undo:** As `career_admin`, `DROP SCHEMA public CASCADE; CREATE SCHEMA public;`, then restore again.
 
+- [ ] **Step 3: Create the read-only app role**
+  - **Run:** From the laptop, pipe the SQL over SSH into `psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f -` (migrate.env loaded on the server), so the password travels only inside SSH. The SQL is built from `~/.config/career-platform/rds-app-password`:
     ```sql
-    CREATE ROLE career_app LOGIN PASSWORD :'app_pw';
+    CREATE ROLE career_app LOGIN PASSWORD '<app pw>';
     GRANT CONNECT ON DATABASE career_platform TO career_app;
     GRANT USAGE ON SCHEMA public TO career_app;
     GRANT SELECT ON ALL TABLES IN SCHEMA public TO career_app;
     ALTER DEFAULT PRIVILEGES FOR ROLE career_admin IN SCHEMA public GRANT SELECT ON TABLES TO career_app;
     ```
-  - **Why:**
-    - `--no-owner` is needed because Railway's tables belong to `postgres`, which doesn't exist on RDS.
-    - The app never writes, so its role only reads. If the app is compromised, it can't change or delete the data.
-  - **Check:** `select version_num from alembic_version` is `0002_project_category`. As `career_app`, `select count(*) from projects` works and `delete from tags` fails with `permission denied`.
-  - **Undo:** `DROP OWNED BY career_app; DROP ROLE career_app;`, then drop and recreate the `public` schema as `career_admin`, and restore again.
+  - **Why:** The app never writes, so its role only reads. If the app is compromised, it can't change or delete the data.
+  - **Check:** With app.env loaded (`sudo -u career-app` or `sudo cat`): `select count(*) from projects` works, and `delete from tags` fails with `permission denied`.
+  - **Undo:** `DROP OWNED BY career_app; DROP ROLE career_app;`
 
-- [ ] **Step 4: Prove the data matches Railway**
-  - **Where:** laptop
-  - **Run:** Run this query on Railway (`railway ssh -s Postgres` → `psql -At`) and on RDS (tunnel). Save the outputs as `backups/checksums-railway.txt` and `backups/checksums-rds.txt`, then `diff` them:
+- [ ] **Step 4: Prove the data matches Railway, then remove the server copy**
+  - **Run:** Run this query on Railway (`railway ssh -s Postgres` → `psql -At`) and on RDS (EC2, migrate.env). Save the outputs as `backups/checksums-railway.txt` and `backups/checksums-rds.txt` on the laptop, then `diff` them:
     ```sql
     SELECT 'profiles', count(*), md5(coalesce(string_agg(t::text, '|' ORDER BY t::text), '')) FROM profiles t
     UNION ALL SELECT 'experiences', count(*), md5(coalesce(string_agg(t::text, '|' ORDER BY t::text), '')) FROM experiences t
     -- same line for education, skills, tags, projects, project_tags, alembic_version
     ORDER BY 1;
     ```
-  - **Check:** `diff` prints nothing, and the row counts match the Railway plan's table (profiles 1, experiences 2, education 2, skills 12, tags 13, projects 13, project_tags 27) or are explained by content edits since then.
+    Then run `shred -u ~/railway.dump` on the server.
+  - **Check:**
+    - `diff` prints nothing.
+    - The row counts match the Railway plan's table (profiles 1, experiences 2, education 2, skills 12, tags 13, projects 13, project_tags 27), or the difference is explained by content edits since then.
+    - `ls ~/railway.dump` on the server says no such file.
   - **Undo:** Read-only.
 
-## 6. Run the app and verify by IP (before DNS)
+## 6. Run the app
 
-- [ ] **Step 1: Write the env files** (from the laptop, so passwords never appear in a terminal transcript)
-  - **Run:** Build two files locally in `env/` (mode 600) and pipe each over SSH into `sudo install`:
-    - `env/aws-app.env`: `DATABASE_URL=postgresql://career_app:<app pw>@<RDS_HOST>:5432/career_platform?sslmode=verify-full&sslrootcert=/etc/ssl/certs/rds-global-bundle.pem&connect_timeout=5`
-    - `env/aws-migrate.env`: the same URL with `career_admin` and the master password.
-
-    On the server: `sudo install -d -m 755 /etc/career-platform`. Install `app.env` with `-o root -g career-app -m 640` and `migrate.env` with `-o ubuntu -g ubuntu -m 600`.
-  - **Check:** `sudo -u career-app cat /etc/career-platform/migrate.env` fails with `Permission denied`, and `sudo -u career-app test -r /etc/career-platform/app.env && echo ok` prints `ok`.
-  - **Undo:** `sudo rm -rf /etc/career-platform`
-
-- [ ] **Step 2: Install the unit and nginx site, then deploy**
+- [ ] **Step 1: Install the unit and nginx site, then deploy**
   - **Run:**
     ```bash
     sudo cp /opt/career-platform/deploy/aws/career-platform.service /etc/systemd/system/
@@ -377,99 +411,149 @@ Gate: Sections 1–2 done. **Everything from here on is billed.** Ask the user b
     ```
   - **Check:**
     - `deploy.sh` exits 0 and prints the commit.
-    - `alembic upgrade head` reports nothing to do, because the restore already brought the schema to `0002`.
+    - `alembic upgrade head` reports nothing to do.
     - `sudo ss -ltnpH 'sport = :8000'` shows only `127.0.0.1:8000`.
     - `ps -o user= -C uvicorn` shows only `career-app`.
+    - `free -m` leaves headroom on the 1 GiB instance. Record it.
+    - `curl -s -H 'Host: aws.elliemcgough.me' http://<EIP>/health` from the laptop is `{"status":"ok"}`.
   - **Undo:** `sudo systemctl disable --now career-platform`, remove the unit and the site link, restore the `default` link, and reload nginx.
+
+## 7. Verify on the test subdomain `aws.elliemcgough.me` (course guide, section 10)
+
+Railway keeps serving `elliemcgough.me` throughout this section.
+
+- [ ] **Step 1: DNS record for the test name**
+  - **Where:** laptop, `cf` CLI
+  - **Run:** Add an A record `aws` → `<EIP>`, **DNS only**, TTL Auto. Change no other record.
+  - **Check:**
+    - `nslookup aws.elliemcgough.me` answers `<EIP>`.
+    - `cf dns records list --zone elliemcgough.me` shows every other record unchanged from `docs/evidence/dns-https-final.md`.
+    - In the Cloudflare dashboard, the new record has the grey cloud.
+  - **Undo:** Delete the `aws` A record.
+
+- [ ] **Step 2: Certificate for the test name**
+  - **Where:** server
+  - **Run:**
+    1. `sudo certbot certonly --nginx -d aws.elliemcgough.me --dry-run`
+    2. If that passes: `sudo certbot --nginx -d aws.elliemcgough.me --redirect --agree-tos --no-eff-email -m <your email>`
+  - **Why:** The staging dry run protects you from Let's Encrypt's limit of five failed validations an hour.
+  - **Check:**
+    - `sudo nginx -t` passes.
+    - `git -C /opt/career-platform status --short` is empty.
+    - `https://aws.elliemcgough.me` shows the padlock in the browser.
+    - `sudo certbot renew --dry-run` succeeds.
+  - **Undo:** `sudo certbot delete --cert-name aws.elliemcgough.me`, then copy the plain port-80 config back.
 
 - [ ] **Step 3: Every page matches Railway**
   - **Where:** laptop
   - **Run:** For `/about /resume /portfolio /contact /privacy /no-such-page` plus `/projects/<id>` for every id in `select id from projects`:
-    - Fetch the page from `https://elliemcgough.me` (Railway) and from `http://<EIP>` with `-H 'Host: elliemcgough.me'` (EC2).
-    - Normalize both with `sed -E 's#https?://elliemcgough\.me##g'`, then `diff`.
+    - Fetch the page from `https://elliemcgough.me` (Railway) and from `https://aws.elliemcgough.me` (EC2).
+    - Normalize both with `sed -E 's#https://(aws\.)?elliemcgough\.me##g'`, then `diff`.
     - Also record each status code.
   - **Check:**
     - No diffs.
     - The `/no-such-page` page has status 404 and every other page 200 on both sides.
-    - `grep -c 'Showing the latest saved profile snapshot'` is 0 on every EC2 page.
-    - `curl -s http://<EIP>/health` is `{"status":"ok"}`.
+    - The fallback marker count is 0 on every EC2 page.
+    - The `og:image` on EC2's `/about` starts with `https://aws.elliemcgough.me/`.
+    - `curl -sI http://aws.elliemcgough.me/` gives `301` to HTTPS.
   - **Undo:** Read-only.
 
 - [ ] **Step 4: Database outage gives a fast 503, then recovers** (closes the Project 1 gap "never triggered live")
   - **Run:**
     1. Revoke the `career-platform-db` 5432 rule. Then `sudo systemctl restart career-platform` (existing connections survive a security group change).
-    2. Time `curl -s -o /dev/null -w '%{http_code} %{time_total}\n' http://<EIP>/about`.
+    2. Time `curl -s -o /dev/null -w '%{http_code} %{time_total}\n' https://aws.elliemcgough.me/about`.
     3. Re-authorize the rule, wait 10 s, and fetch again **without** restarting.
   - **Check:**
     - During the outage: `503` in under 15 s, with the marker present.
     - After re-authorizing: `200` with the marker absent.
-    - Record both in a new `docs/evidence/aws-db-outage.md`.
   - **Undo:** Re-authorize the rule (Section 3 Step 2).
 
-## 7. Cut the domain over to EC2
+- [ ] **Step 5: Record the tests**
+  - **Run:** Write `docs/evidence/aws-test-subdomain.md` with what was tested, the commands and output, and what is still unverified.
 
-Gate: Sections 5 and 6 all passed. This changes what the public sees, so **ask the user before Step 2.** Expected outage: from the DNS change until Certbot finishes, usually under 10 minutes.
+## 8. Cut the domain over to EC2 (course guide, section 11)
+
+Gate: Section 7 all passed. Not required during class, but it must happen before the Railway trial ends. This changes what the public sees, so **ask the user before Step 2.** Expected outage: from the DNS change until Certbot finishes, usually under 10 minutes.
 
 - [ ] **Step 1: Last data check**
-  - **Run:** Rerun Section 5 Step 4.
-  - **Check:** No diff. If Railway content changed, repeat Section 5 Steps 1, 3 and 4 first.
+  - **Run:** Rerun Section 5 Step 4's checksum query.
+  - **Check:** No diff. If Railway content changed, repeat Section 5 first.
 
 - [ ] **Step 2: Point the apex at the Elastic IP**
-  - **Where:** Cloudflare dashboard, or `cf` CLI (done by the user)
-  - **Run:** Replace the `elliemcgough.me` CNAME (`tmbs117o.up.railway.app`) with an **A record to `<EIP>`, DNS only**, TTL Auto. **Do not touch** `www`, the redirect rule, `_railway-verify`, MX or any TXT records.
-  - **Check:** `dig +short elliemcgough.me @8.8.8.8` and `@1.1.1.1` both print `<EIP>`.
+  - **Where:** `cf` CLI or the Cloudflare dashboard
+  - **Run:** Replace the `elliemcgough.me` CNAME (`tmbs117o.up.railway.app`) with an **A record to `<EIP>`, DNS only**, TTL Auto. **Do not touch** `www`, the redirect rule, `_railway-verify`, `aws`, MX or any TXT records.
+  - **Check:** `nslookup elliemcgough.me` and `dig +short elliemcgough.me @8.8.8.8` both print `<EIP>`.
   - **Undo:** Put back the CNAME to `tmbs117o.up.railway.app`, DNS only. Railway is unchanged and still has the custom domain.
 
-- [ ] **Step 3: Certificate, staging first**
+- [ ] **Step 3: Add the apex to the certificate**
   - **Where:** server
   - **Run:**
-    1. `sudo certbot certonly --nginx -d elliemcgough.me --dry-run`
-    2. If that passes: `sudo certbot --nginx -d elliemcgough.me --redirect --agree-tos --no-eff-email -m <your email>`
+    1. `sudo certbot certonly --nginx --cert-name aws.elliemcgough.me -d aws.elliemcgough.me -d elliemcgough.me --dry-run`
+    2. If that passes: the same command without `--dry-run` and with `--expand`, then `sudo certbot install --nginx --cert-name aws.elliemcgough.me`.
   - **Why:**
-    - The staging dry run protects you from Let's Encrypt's limit of five failed validations an hour.
-    - `www` is answered by Cloudflare, so the certificate only needs the apex.
+    - `www` is answered by Cloudflare, so the certificate only needs the apex and the test name.
     - If validation reaches Railway, DNS caches haven't updated yet. Wait 5 minutes and retry.
-  - **Check:** `sudo nginx -t` passes. `git -C /opt/career-platform status --short` is empty (Certbot edited only `/etc/nginx`).
-  - **Undo:** `sudo certbot delete --cert-name elliemcgough.me`, then copy the plain port-80 config back.
+  - **Check:** `sudo nginx -t` passes. `git -C /opt/career-platform status --short` is empty.
+  - **Undo:** Re-issue for `aws.elliemcgough.me` alone.
 
 - [ ] **Step 4: Check the real domain is on EC2**
   - **Where:** laptop
   - **Run and check:**
-    - `curl -sI https://elliemcgough.me/about` shows `HTTP/2 200` or `HTTP/1.1 200`, and `server: nginx`.
+    - `curl -sI https://elliemcgough.me/about` shows a 200 and `server: nginx`.
     - `curl -sI http://elliemcgough.me/` gives `301` to `https://elliemcgough.me/`.
     - `curl -sI https://www.elliemcgough.me/` gives `301` to `https://elliemcgough.me/` (the Cloudflare rule).
-    - `openssl s_client -connect elliemcgough.me:443 -servername elliemcgough.me </dev/null 2>/dev/null | openssl x509 -noout -issuer -enddate` shows a Let's Encrypt issuer.
+    - `openssl s_client -connect elliemcgough.me:443 -servername elliemcgough.me </dev/null 2>/dev/null | openssl x509 -noout -issuer -ext subjectAltName` shows Let's Encrypt and both names.
     - The `og:image` on `/about` starts with `https://elliemcgough.me/`.
     - The fallback marker count is 0.
-    - On the server, `sudo certbot renew --dry-run` succeeds and `systemctl list-timers | grep certbot` shows the timer.
+    - The padlock shows in the browser.
   - The content freeze ends here. Record everything in `docs/evidence/aws-cutover.md`.
-  - **Undo:** Section 7 Step 2's undo.
+  - **Undo:** Section 8 Step 2's undo. The app doesn't write, but if any content was edited on RDS after cutover, copy it back to Railway before rolling back (course guide, section 11).
 
-## 8. Rollback (reverse order)
+## 9. After cutover: merge, document (course guide, sections 11–12)
 
-1. **The site is broken after cutover:** put the Cloudflare apex back to the CNAME `tmbs117o.up.railway.app` (DNS only). Railway is untouched, so the site returns when DNS updates.
-2. **The app is broken on EC2:** `deploy.sh <previous commit>` redeploys a known-good commit. Logs: `journalctl -u career-platform -n 200`.
-3. **Remove AWS entirely:** Section 9.
+- [ ] **Step 1: Merge to `main` and run `main` on the server**
+  - **Run:** Change `deploy.sh`'s default ref to `origin/main` and commit. Merge `aws-ec2-rds-migration` into `main` and push (ask first). On the server, run `deploy.sh origin/main`. Then delete the branch locally and on GitHub.
+  - **Why:** Once the domain points at AWS, Railway no longer serves anything that matters, so its redeploy from `main` is harmless.
+  - **Check:** The site still loads at `https://elliemcgough.me` with no fallback marker. `git -C /opt/career-platform rev-parse --short HEAD` matches `origin/main`.
 
-## 9. After cutover (not done by this plan)
+- [ ] **Step 2: README**
+  - **Run:** Update the README for the move, with a Mermaid architecture diagram:
+    - Cloudflare DNS → nginx (HTTPS ends here) → uvicorn on loopback → RDS in the VPC, with its 1-day backups.
+    - SSH as the only admin path.
+    - Railway, if it still serves anything.
+    - Unfinished items marked.
+  - **Check:** The README covers five things:
+    - which architecture and why
+    - how the database is backed up and restored
+    - what was tested on `aws.` and what passed
+    - the monthly cost
+    - what's next
 
-- **Keep Railway running for at least a week** as the rollback. Retiring it (removing the custom domain and `_railway-verify`, then shutting down the service and its database) is a separate plan.
-- **Docs to rewrite** once the cutover holds: `docs/how-this-site-is-secured.md` (AWS security groups instead of the Azure NSG, the EIP, RDS TLS and the read-only role), the README architecture and decisions, and `docs/request-path.md`.
-- **Content edits** now go to RDS as `career_admin` through the Section 5 Step 2 tunnel. `scripts/*.sql` are still SQLite-only.
-- **Merging to `main`** redeploys Railway with the extra files, which is harmless. Decide this after Railway is retired.
-- **Costs** (approximate on-demand, running all month):
+    No passwords, keys or exports. Every arrow in the diagram matches the deployment.
+
+- **Later (not this plan):**
+  - Retire Railway: remove the custom domain and `_railway-verify`, then shut down the service and its database. Do it before the trial ends, and after a few days on AWS.
+  - Rewrite `docs/how-this-site-is-secured.md` and `docs/request-path.md` for AWS.
+  - Content edits now go to RDS as `career_admin`, from EC2. `scripts/*.sql` are still SQLite-only.
+
+## 10. Costs and teardown
+
+- **Costs** (us-east-1 public price list of 2026-11-03, on-demand, 730 hours):
 
   | Item | Monthly |
   | --- | --- |
-  | `t3.small` | about $15 |
-  | `db.t4g.micro` | about $12 |
-  | RDS gp3, 20 GB | about $2.30 |
-  | EC2 root volume, 10 GB | about $0.80 |
-  | Public IPv4 (EIP) | about $3.65 |
-  | **Total** | **about $34** |
+  | `t3.micro` ($0.0104/hr) | $7.59 |
+  | `db.t4g.micro` Single-AZ ($0.016/hr) | $11.68 |
+  | EC2 gp3, 20 GB ($0.08/GB-month) | $1.60 |
+  | RDS gp3, 20 GB ($0.115/GB-month) | $2.30 |
+  | Public IPv4, Elastic IP ($0.005/hr) | $3.65 |
+  | Backups (within the free amount) | $0.00 |
+  | Data out (under 100 GB/month free) | $0.00 |
+  | **Total** | **$26.82** |
 
+  - On the Free plan's $100 in credits, that's about 113 days.
   - Stopping the database only pauses it: RDS restarts it after 7 days.
-  - Stopping the instance still bills the EIP and the volumes.
+  - Stopping the instance still bills the Elastic IP and the volumes.
 - **Teardown at the end of the course:**
   1. Point DNS elsewhere.
   2. `aws rds modify-db-instance --db-instance-identifier career-platform-db --no-deletion-protection --apply-immediately`
@@ -477,6 +561,13 @@ Gate: Sections 5 and 6 all passed. This changes what the public sees, so **ask t
   4. `delete-db-subnet-group`
   5. `terminate-instances`
   6. `disassociate-address`, then `release-address`
-  7. `delete-security-group` for `<DB_SG>`, then `<WEB_SG>`
+  7. `delete-security-group` for `sg-0d2918f4b6db4e9a3`, then `sg-0e35c236b5e8b76c1`
   8. `delete-key-pair`
-  9. Confirm `describe-addresses`, `describe-volumes` and `describe-db-snapshots` are empty or intended.
+  9. Delete the Cloudflare `aws` record.
+  10. Confirm `describe-addresses`, `describe-volumes` and `describe-db-snapshots` are empty or intended.
+
+## Rollback (reverse order)
+
+1. **The domain is broken after cutover:** put the Cloudflare apex back to the CNAME `tmbs117o.up.railway.app` (DNS only). Railway is untouched, so the site returns when DNS updates.
+2. **The app is broken on EC2:** `deploy.sh <previous commit>` redeploys a known-good commit. Logs: `journalctl -u career-platform -n 200`.
+3. **Remove AWS entirely:** Section 10 teardown.
