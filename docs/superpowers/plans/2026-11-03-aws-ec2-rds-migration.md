@@ -219,9 +219,11 @@ Check: `git log origin/main..origin/aws-ec2-rds-migration --oneline` lists this 
   - **Check:** `aws ec2 describe-key-pairs --key-names isba4775-aws` shows `KeyType: ed25519`. `ls -l ~/.config/career-platform/` shows `-rw-------` for both password files.
   - **Undo:** `aws ec2 delete-key-pair --key-name isba4775-aws`
 
-> **Executed 2026-11-03: passwords only; the SSH key is not done yet.**
-> - The passwords live in `~/.config/career-platform/` (directory 700, files 600, 48 hex characters each), outside the repository as the course guide asks, instead of the git-ignored `env/`. They were never printed.
-> - The SSH key is generated and imported with Section 3 Step 3.
+> **Executed 2026-11-03: complete (in two parts).**
+> - **Passwords**, before the database was created: they live in `~/.config/career-platform/` (directory 700, files 600, 48 hex characters each), outside the repository as the course guide asks, instead of the git-ignored `env/`. They were never printed.
+> - **SSH key**, before the launch:
+>   - Generated on the laptop as `~/.ssh/isba4775_aws` (600) and `.pub` (644). No file existed with that name before.
+>   - Imported as `isba4775-aws` (`key-01ff8653df9a0b993`, `ed25519`). The private key never left the laptop.
 
 - [x] **Step 2: Security groups**
   - **Run:** Get `<HOME_IP>` with `curl -s https://checkip.amazonaws.com`. Create `career-platform-web` in `vpc-02ed278a349b93372` with these inbound rules:
@@ -241,7 +243,7 @@ Check: `git log origin/main..origin/aws-ec2-rds-migration --oneline` lists this 
 > - `<DB_SG>` = `sg-0d2918f4b6db4e9a3` (`career-platform-db`). Inbound rule: tcp 5432 from `sg-0e35c236b5e8b76c1` only.
 > - Check: `describe-security-groups` shows exactly these rules, with no `0.0.0.0/0` on 22 or 5432.
 
-- [ ] **Step 3: Launch the instance (dry run first)**
+- [x] **Step 3: Launch the instance (dry run first)**
   - **Run:**
     ```bash
     AMI_ID=$(aws ssm get-parameter --name /aws/service/canonical/ubuntu/server/26.04/stable/current/amd64/hvm/ebs-gp3/ami-id --query Parameter.Value --output text)
@@ -261,11 +263,33 @@ Check: `git log origin/main..origin/aws-ec2-rds-migration --oneline` lists this 
   - **Check:** `describe-instances` shows `t3.micro`, `running`, `MetadataOptions.HttpTokens: required`, AZ `us-east-1a`, and a 20 GB encrypted root volume. `describe-instance-credit-specifications` shows `standard`. If `Encrypted=true` is denied (KMS), record it and rerun with `Encrypted=false`.
   - **Undo:** `aws ec2 terminate-instances --instance-ids <INSTANCE_ID>`
 
-- [ ] **Step 4: Elastic IP**
+> **Executed 2026-11-03: complete.**
+> - **Image:** `<AMI_ID>` = `ami-0bfc5cae5711ffac8`, `ubuntu/images/hvm-ssd-gp3/ubuntu-resolute-26.04-amd64-server-20261028`, owner `099720109477`, root `/dev/sda1`, `RunInstances` (not Pro).
+> - **Dry run:** `DryRunOperation: Request would have succeeded`.
+> - **Instance:** `<INSTANCE_ID>` = `i-08b123d5a33f3a6eb`. `instance-status-ok` took 3 min 26 s.
+> - **Settings checked:**
+>   - `t3.micro`, `running`, `us-east-1a`.
+>   - `HttpTokens: required`, hop limit 1.
+>   - Security group `career-platform-web`, key `isba4775-aws`, no instance profile.
+>   - CPU credits `standard`.
+>   - Root volume `vol-02d8b816f9d9fc173`: 20 GB `gp3`, `Encrypted: true` (no KMS denial), `DeleteOnTermination: true`.
+> - **Host key:** the three fingerprints in `get-console-output --latest` (ECDSA `SHA256:FWl0FYI1…`, ED25519 `SHA256:jogwpQ3B…`, RSA `SHA256:+YTHbXOe…`) matched `ssh-keyscan` of the Elastic IP exactly. Only then were they added to `~/.ssh/known_hosts`, and the first SSH used `StrictHostKeyChecking=yes`.
+> - **On the server:**
+>   - `Ubuntu 26.04.1 LTS`.
+>   - **Python 3.14.4**, which is in `uv.lock`'s 3.12–3.14 wheel range.
+>   - 908 MiB RAM with 588 MiB available, 2 vCPUs, and 17 GB free on `/`.
+>   - `postgresql-client` candidate `18+290ubuntu1`, not yet installed (Section 4 Step 1).
+
+- [x] **Step 4: Elastic IP**
   - **Run:** `allocate-address --domain vpc --tag-specifications 'ResourceType=elastic-ip,Tags=[{Key=Name,Value=career-platform}]'`, then `associate-address --instance-id <INSTANCE_ID> --allocation-id <EIP_ALLOC>`.
   - **Why:** The address survives stop and start, so the Cloudflare records keep working. It bills while idle too, so release it at teardown.
   - **Check:** `ssh -i ~/.ssh/isba4775_aws ubuntu@<EIP> 'lsb_release -ds; curl -s -o /dev/null -w "%{http_code}\n" http://169.254.169.254/latest/meta-data/'` prints `Ubuntu 26.04…`, then `401` (IMDSv1 refused).
   - **Undo:** `disassociate-address --association-id …`, then `release-address --allocation-id <EIP_ALLOC>`.
+
+> **Executed 2026-11-03: complete.**
+> - `<EIP>` = `52.71.186.61`, `<EIP_ALLOC>` = `eipalloc-0a6c7030f9eb097fa`, association `eipassoc-0b858812160b85856`.
+> - `describe-instances` shows the instance's public IP is the Elastic IP, and `describe-addresses` lists only this one address.
+> - Check over SSH: `lsb_release` printed `Ubuntu 26.04.1 LTS`, and the metadata request without a token returned `401` (IMDSv1 refused).
 
 - [x] **Step 5: DB subnet group and the RDS instance**
   - **Run:**
@@ -299,7 +323,8 @@ Check: `git log origin/main..origin/aws-ec2-rds-migration --oneline` lists this 
 >   - This error also confirms the account is on the **Free plan**.
 >   - Consequence: point-in-time restore only reaches back 1 day. Railway, plus the dumps in `backups/`, remain the longer-term copies.
 > - **Create response:** `creating`, `db.t4g.micro`, `18.6`, `us-east-1a`, `MultiAZ: false`, `PubliclyAccessible: false`, `StorageEncrypted: true`, `20` GB `gp3`, `MaxAllocatedStorage: null` (autoscaling off), `BackupRetentionPeriod: 1`, `DeletionProtection: true`, security group `sg-0d2918f4b6db4e9a3`.
-> - **Not waited on**, as the course guide suggests. `<RDS_HOST>` and the `available` check get recorded when it finishes.
+> - **Not waited on**, as the course guide suggests.
+> - **Later the same day, after the EC2 launch:** status `available`. `<RDS_HOST>` = `career-platform-db.ccjwoiuqy9dz.us-east-1.rds.amazonaws.com`, `BackupRetentionPeriod: 1`, `PubliclyAccessible: false`.
 
 ## 4. Server setup (SSH as `ubuntu`)
 
