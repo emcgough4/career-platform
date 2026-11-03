@@ -37,7 +37,7 @@ From the course policy. Each one is handled by a flag in Section 3:
 - Names: key pair `isba4775-aws`, SGs `career-platform-web` and `career-platform-db`, instance `Name=career-platform`, EIP `Name=career-platform`, DB subnet group and DB instance `career-platform-db`, database `career_platform`, RDS owner `career_admin`, app role `career_app`.
 - AZ `us-east-1a` for both the instance and the database (no cross-AZ traffic).
 - Values found at run time are written into the Executed notes as `<AMI_ID>`, `<INSTANCE_ID>`, `<WEB_SG>`, `<DB_SG>`, `<EIP>`, `<EIP_ALLOC>`, `<RDS_HOST>`, `<HOME_IP>`, `<SCHOOL_IP>`. IDs and the public IP may be recorded. **Passwords, full `DATABASE_URL`s and dumps never go into the repo, the plan or chat.**
-- Passwords: `openssl rand -hex 24` (hex only, so nothing needs URL-encoding). Stored on the laptop in `env/rds-master-password` and `env/rds-app-password`, mode 600.
+- Passwords: `openssl rand -hex 24` (hex only, so nothing needs URL-encoding). Stored on the laptop in `~/.config/career-platform/rds-master-password` and `~/.config/career-platform/rds-app-password`, mode 600.
 - Server layout: code in `/opt/career-platform` (owner `ubuntu`). App env `/etc/career-platform/app.env` (`root:career-app`, 0640). Migration env `/etc/career-platform/migrate.env` (`ubuntu:ubuntu`, 0600). RDS CA `/etc/ssl/certs/rds-global-bundle.pem`.
 - App `DATABASE_URL` query string: `?sslmode=verify-full&sslrootcert=/etc/ssl/certs/rds-global-bundle.pem&connect_timeout=5`.
 - Python comes from Ubuntu's `/usr/bin/python3.12` (`UV_PYTHON_PREFERENCE=only-system`), never a uv-managed Python under `~ubuntu`, because `career-app` can't read `/home/ubuntu`.
@@ -194,12 +194,16 @@ Gate: Sections 1–2 done. **Everything from here on is billed.** Ask the user b
     ssh-keygen -t ed25519 -f ~/.ssh/isba4775_aws -C isba4775-aws -N ''
     aws ec2 import-key-pair --key-name isba4775-aws --public-key-material fileb://$HOME/.ssh/isba4775_aws.pub \
       --tag-specifications 'ResourceType=key-pair,Tags=[{Key=Name,Value=isba4775-aws}]'
-    umask 077; openssl rand -hex 24 > env/rds-master-password; openssl rand -hex 24 > env/rds-app-password
+    umask 077; openssl rand -hex 24 > ~/.config/career-platform/rds-master-password; openssl rand -hex 24 > ~/.config/career-platform/rds-app-password
     ```
-  - **Check:** `aws ec2 describe-key-pairs --key-names isba4775-aws` shows `KeyType: ed25519`. `ls -l env/rds-*` shows `-rw-------`. `git status --short env` prints nothing.
+  - **Check:** `aws ec2 describe-key-pairs --key-names isba4775-aws` shows `KeyType: ed25519`. `ls -l ~/.config/career-platform/` shows `-rw-------` for both password files.
   - **Undo:** `aws ec2 delete-key-pair --key-name isba4775-aws`
 
-- [ ] **Step 2: Security groups**
+> **Executed 2026-11-03: passwords only; the SSH key is not done yet.**
+> - The passwords live in `~/.config/career-platform/` (directory 700, files 600, 48 hex characters each), outside the repository as the course guide asks, instead of the git-ignored `env/`. They were never printed.
+> - The SSH key is generated and imported with Section 3 Step 3.
+
+- [x] **Step 2: Security groups**
   - **Run:** Get `<HOME_IP>` with `curl -s https://checkip.amazonaws.com`. Create `career-platform-web` in `vpc-02ed278a349b93372` with these inbound rules:
     - tcp 22 from `<HOME_IP>/32` (description `home`)
     - tcp 80 and 443 from `0.0.0.0/0`
@@ -208,6 +212,14 @@ Gate: Sections 1–2 done. **Everything from here on is billed.** Ask the user b
   - **Why:** SSH only from your IPs, as on Azure. The database only accepts the web server's security group, never an IP range.
   - **Check:** `aws ec2 describe-security-groups --group-ids <WEB_SG> <DB_SG> --query 'SecurityGroups[].IpPermissions'` shows exactly those rules, with no `0.0.0.0/0` on 22 or 5432.
   - **Undo:** `aws ec2 delete-security-group --group-id <DB_SG>`, then the same for `<WEB_SG>`.
+
+> **Executed 2026-11-03: complete.** Created before Sections 1–2, because the course guide's section 7 creates both groups along with the database.
+> - `<WEB_SG>` = `sg-0e35c236b5e8b76c1` (`career-platform-web`). Inbound rules:
+>   - tcp 22 from `<HOME_IP>/32`, description `laptop-2026-11-03`. The address isn't recorded here.
+>   - tcp 80 from `0.0.0.0/0`.
+>   - tcp 443 from `0.0.0.0/0`.
+> - `<DB_SG>` = `sg-0d2918f4b6db4e9a3` (`career-platform-db`). Inbound rule: tcp 5432 from `sg-0e35c236b5e8b76c1` only.
+> - Check: `describe-security-groups` shows exactly these rules, with no `0.0.0.0/0` on 22 or 5432.
 
 - [ ] **Step 3: Launch the instance (dry run first)**
   - **Run:**
@@ -234,7 +246,7 @@ Gate: Sections 1–2 done. **Everything from here on is billed.** Ask the user b
   - **Check:** `ssh -i ~/.ssh/isba4775_aws ubuntu@<EIP> 'lsb_release -ds; curl -s -o /dev/null -w "%{http_code}\n" http://169.254.169.254/latest/meta-data/'` prints `Ubuntu 24.04…`, then `401` (IMDSv1 refused).
   - **Undo:** `disassociate-address --association-id …`, then `release-address --allocation-id <EIP_ALLOC>`.
 
-- [ ] **Step 5: DB subnet group and the RDS instance**
+- [x] **Step 5: DB subnet group and the RDS instance**
   - **Run:**
     ```bash
     aws rds create-db-subnet-group --db-subnet-group-name career-platform-db \
@@ -244,8 +256,8 @@ Gate: Sections 1–2 done. **Everything from here on is billed.** Ask the user b
       --engine postgres --engine-version 18.6 --db-instance-class db.t4g.micro \
       --allocated-storage 20 --storage-type gp3 --storage-encrypted --no-multi-az --no-publicly-accessible \
       --availability-zone us-east-1a --db-subnet-group-name career-platform-db --vpc-security-group-ids <DB_SG> \
-      --db-name career_platform --master-username career_admin --master-user-password "$(cat env/rds-master-password)" \
-      --backup-retention-period 7 --deletion-protection --copy-tags-to-snapshot \
+      --db-name career_platform --master-username career_admin --master-user-password "$(cat ~/.config/career-platform/rds-master-password)" \
+      --backup-retention-period 1 --deletion-protection --copy-tags-to-snapshot \
       --tags Key=Name,Value=career-platform-db
     aws rds wait db-instance-available --db-instance-identifier career-platform-db   # about 10–15 min
     ```
@@ -255,6 +267,18 @@ Gate: Sections 1–2 done. **Everything from here on is billed.** Ask the user b
     - `--deletion-protection` stops an accidental delete.
   - **Check:** `describe-db-instances --query 'DBInstances[0].[Endpoint.Address,EngineVersion,DBInstanceClass,MultiAZ,PubliclyAccessible,StorageEncrypted,AllocatedStorage,MaxAllocatedStorage]'` gives `<RDS_HOST>`, `18.6`, `db.t4g.micro`, `false`, `false`, `true`, `20`, `None`.
   - **Undo:** Section 9 (teardown). Deletion protection must be turned off first.
+
+> **Executed 2026-11-03: create request accepted. Not yet confirmed `available`.**
+> - **Subnet group:** `career-platform-db` covers all six default subnets (us-east-1a to f), status `Complete`.
+> - **Password handling:** the create call used `--cli-input-json` from a temporary 600-mode file in the scratchpad, deleted straight after, so the password never appeared in a command line or in output.
+> - **Backup retention is 1 day, not 7** (a deviation from the plan and the course guide):
+>   - 7 days failed with `FreeTierRestrictionError: The specified backup retention period exceeds the maximum available to free tier customers`.
+>   - 6 down to 2 failed the same way. 1 day was accepted. Rejected requests created nothing.
+>   - The only way to get more is to upgrade the account plan, which the course guide says not to do.
+>   - This error also confirms the account is on the **Free plan**.
+>   - Consequence: point-in-time restore only reaches back 1 day. Railway, plus the dumps in `backups/`, remain the longer-term copies.
+> - **Create response:** `creating`, `db.t4g.micro`, `18.6`, `us-east-1a`, `MultiAZ: false`, `PubliclyAccessible: false`, `StorageEncrypted: true`, `20` GB `gp3`, `MaxAllocatedStorage: null` (autoscaling off), `BackupRetentionPeriod: 1`, `DeletionProtection: true`, security group `sg-0d2918f4b6db4e9a3`.
+> - **Not waited on**, as the course guide suggests. `<RDS_HOST>` and the `available` check get recorded when it finishes.
 
 ## 4. Server setup (SSH as `ubuntu`)
 
@@ -296,14 +320,14 @@ Gate: Sections 1–2 done. **Everything from here on is billed.** Ask the user b
   - **Where:** laptop, in a second terminal
   - **Run:** `ssh -i ~/.ssh/isba4775_aws -N -L 15432:<RDS_HOST>:5432 ubuntu@<EIP>`
   - **Why:** RDS isn't public. Port 15432 avoids your local test Postgres on 5433. Use `sslmode=require` through the tunnel, because `verify-full` checks the hostname and the tunnel's hostname is `127.0.0.1`.
-  - **Check:** `PGPASSWORD=$(cat env/rds-master-password) /opt/homebrew/opt/postgresql@18/bin/psql "host=127.0.0.1 port=15432 user=career_admin dbname=career_platform sslmode=require" -Atc 'select version(), ssl from pg_stat_ssl where pid = pg_backend_pid()'` prints `PostgreSQL 18.6…|t`.
+  - **Check:** `PGPASSWORD=$(cat ~/.config/career-platform/rds-master-password) /opt/homebrew/opt/postgresql@18/bin/psql "host=127.0.0.1 port=15432 user=career_admin dbname=career_platform sslmode=require" -Atc 'select version(), ssl from pg_stat_ssl where pid = pg_backend_pid()'` prints `PostgreSQL 18.6…|t`.
   - **Undo:** Ctrl-C the tunnel.
 
 - [ ] **Step 3: Restore, then create the read-only app role**
   - **Where:** laptop, with the tunnel open
   - **Run:**
     1. `pg_restore --no-owner --no-acl --exit-on-error -h 127.0.0.1 -p 15432 -U career_admin -d career_platform <dump>`, with `PGSSLMODE=require` and `PGPASSWORD` set from the file.
-    2. In `psql` with `-v app_pw="$(cat env/rds-app-password)"`, run:
+    2. In `psql` with `-v app_pw="$(cat ~/.config/career-platform/rds-app-password)"`, run:
 
     ```sql
     CREATE ROLE career_app LOGIN PASSWORD :'app_pw';
