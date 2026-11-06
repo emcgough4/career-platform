@@ -13,7 +13,8 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Migrate the same database the app uses (DATABASE_URL, falling back to the app default).
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# set_main_option is configparser, where % starts an interpolation; %% keeps a URL-encoded password intact.
+config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
 
 target_metadata = Base.metadata
 
