@@ -89,7 +89,7 @@ The constraints come from the course policy `guides/aws-ec2-deployment-policy.js
 - Consumes: `/health` route (`app/main.py`), env file paths from Global Constraints.
 - Produces: `deploy/aws/deploy.sh [git-ref]`, run on the server as `ubuntu` from any directory. It exits 0 only if `/health` returns `{"status":"ok"}` and `/about` returns 200 (not 503) after the restart. Sections 6 and 9 call it.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_aws_deploy_config.py`. They read the three files as text from `DEPLOY = REPO_ROOT / "deploy" / "aws"` through a small `read(name)` helper:
+- [x] **Step 1: Write the failing tests** in `tests/test_aws_deploy_config.py`. They read the three files as text from `DEPLOY = REPO_ROOT / "deploy" / "aws"` through a small `read(name)` helper:
 
 ```python
 def test_unit_runs_uvicorn_on_loopback_without_trusting_all_proxies():
@@ -127,12 +127,12 @@ def test_deploy_script_is_executable():
     assert os.access(DEPLOY / "deploy.sh", os.X_OK)
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `uv run pytest tests/test_aws_deploy_config.py -v`
 Expected: 5 FAIL with `FileNotFoundError` (no `deploy/aws/`).
 
-- [ ] **Step 3: Write the three files**
+- [x] **Step 3: Write the three files**
   - `career-platform.service`: the Azure unit from `2026-10-01-operate-the-vm.md` Task 2, with the user, paths and env file above, `After=network-online.target` and `Wants=network-online.target`, and `RestartSec=3`. Two workers: a `t3.micro` has 2 vCPUs, and the Azure VM ran two workers in about 140 MB of RAM.
   - `nginx-career-platform.conf`: one `server` block on port 80 (`listen 80 default_server;`, `listen [::]:80 default_server;`, `server_name aws.elliemcgough.me elliemcgough.me;`), with `location /` proxying as in the tests. Certbot adds the 443 block in Section 7.
   - `deploy.sh`:
@@ -143,17 +143,21 @@ Expected: 5 FAIL with `FileNotFoundError` (no `deploy/aws/`).
     5. Poll `curl -fsS http://127.0.0.1:8000/health` up to 15 times, one second apart.
     6. Require `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/about` to be `200`. Print a one-line summary with the deployed commit (`git rev-parse --short HEAD`).
 
-- [ ] **Step 4: Run the tests to see them pass**
+- [x] **Step 4: Run the tests to see them pass**
 
 Run: `uv run pytest -q`
 Expected: all pass (5 new).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add deploy/aws tests/test_aws_deploy_config.py
 git commit -m "feat: add the systemd unit, nginx site and deploy script for EC2"
 ```
+
+> **Executed 2026-11-05: complete (`386051f`).** Followed the plan as written.
+> - The 5 tests failed first: 4 with `FileNotFoundError` and 1 on `os.access`. After the three files were written, the suite was 53 passed.
+> - `bash -n deploy/aws/deploy.sh` reports no syntax errors.
 
 ## 2. Code: database URL safety (Task 2)
 
@@ -168,7 +172,7 @@ git commit -m "feat: add the systemd unit, nginx site and deploy script for EC2"
 - Consumes: `normalize_database_url(url: str) -> str` (unchanged).
 - Produces: nothing new. `alembic upgrade head` works for any valid URL.
 
-- [ ] **Step 1: Write the failing test** in `tests/test_alembic_env.py`. Use the subprocess pattern from `tests/test_config.py`:
+- [x] **Step 1: Write the failing test** in `tests/test_alembic_env.py`. Use the subprocess pattern from `tests/test_config.py`:
 
 ```python
 def test_offline_migration_accepts_percent_encoded_password():
@@ -182,15 +186,15 @@ def test_offline_migration_accepts_percent_encoded_password():
 Add this case to the `test_normalize_database_url` parametrize list in `tests/test_config.py`. It passes already; it guards the query string:
 `("postgresql://u:p@h:5432/career_platform?sslmode=verify-full&sslrootcert=/etc/ssl/certs/rds-global-bundle.pem&connect_timeout=5", "postgresql+psycopg://u:p@h:5432/career_platform?sslmode=verify-full&sslrootcert=/etc/ssl/certs/rds-global-bundle.pem&connect_timeout=5")`
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `uv run pytest tests/test_alembic_env.py -v`
 Expected: FAIL, with stderr containing `invalid interpolation syntax`.
 
-- [ ] **Step 3: Escape `%` as `%%`** in `alembic/env.py`: `config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))`, plus a one-line comment saying why. Add the `.env.example` comment:
+- [x] **Step 3: Escape `%` as `%%`** in `alembic/env.py`: `config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))`, plus a one-line comment saying why. Add the `.env.example` comment:
   `# AWS (EC2 → RDS): postgresql://career_app:<password>@<rds-host>:5432/career_platform?sslmode=verify-full&sslrootcert=/etc/ssl/certs/rds-global-bundle.pem&connect_timeout=5`
 
-- [ ] **Step 4: Run the tests to see them pass**
+- [x] **Step 4: Run the tests to see them pass**
 
 Run: `uv run pytest -q`
 Expected: all pass.
@@ -203,6 +207,10 @@ git commit -m "fix: let Alembic accept percent-encoded database URLs"
 git push -u origin aws-ec2-rds-migration   # only after the user says yes
 ```
 Check: `git log origin/main..origin/aws-ec2-rds-migration --oneline` lists this plan's commits, and `origin/main` has not moved. Railway shows no new deployment.
+
+> **Executed 2026-11-05: complete (`e1010c2`).** Followed the plan as written.
+> - The test failed first with `ValueError: invalid interpolation syntax … at position 24`. After the `%%` escape, the suite was 55 passed.
+> - `alembic current` against the local SQLite file still prints `0002_project_category (head)`.
 
 ## 3. AWS resources (laptop, AWS CLI)
 
