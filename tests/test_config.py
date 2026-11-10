@@ -36,6 +36,10 @@ def test_database_url_reads_environment():
         ("postgres://u:p@db.example:5432/railway", "postgresql+psycopg://u:p@db.example:5432/railway"),
         ("postgresql+psycopg://u:p@db.example/railway", "postgresql+psycopg://u:p@db.example/railway"),
         ("sqlite:///./data/career_platform.db", "sqlite:///./data/career_platform.db"),
+        (
+            "postgresql://u:p@h:5432/career_platform?sslmode=verify-full&sslrootcert=/etc/ssl/certs/rds-global-bundle.pem&connect_timeout=5",
+            "postgresql+psycopg://u:p@h:5432/career_platform?sslmode=verify-full&sslrootcert=/etc/ssl/certs/rds-global-bundle.pem&connect_timeout=5",
+        ),
     ],
 )
 def test_normalize_database_url(raw, expected):
