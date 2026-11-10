@@ -393,13 +393,13 @@ Check: `git log origin/main..origin/aws-ec2-rds-migration --oneline` lists this 
 
 ## 5. Data: Railway → RDS, restored from EC2
 
-- [ ] **Step 1: Start the content freeze and take a fresh dump**
+- [x] **Step 1: Start the content freeze and take a fresh dump**
   - **Where:** laptop
   - **Run:** Follow the `railway-postgres-backup-method` memory: `railway ssh -s Postgres`, then `pg_dump -Fc`, transferred as base64 between markers, with sha256 compared at both ends. Save it as `backups/railway-postgres-<UTC timestamp>.dump`.
   - **Check:** The two sha256 values match. `/opt/homebrew/opt/postgresql@18/bin/pg_restore --list <dump> | grep -c 'TABLE DATA'` is 8 (seven tables plus `alembic_version`).
   - **Undo:** Read-only on Railway.
 
-- [ ] **Step 2: Copy the dump to EC2 and restore it into the empty database**
+- [x] **Step 2: Copy the dump to EC2 and restore it into the empty database**
   - **Run:**
     1. `scp -i ~/.ssh/isba4775_aws <dump> ubuntu@<EIP>:/home/ubuntu/railway.dump`, then `chmod 600 ~/railway.dump` on the server. `sha256sum` must match the laptop's `shasum -a 256`.
     2. On the server: `(set -a; . /etc/career-platform/migrate.env; set +a; pg_restore --no-owner --no-acl --exit-on-error -d "$DATABASE_URL" ~/railway.dump)`
@@ -410,7 +410,7 @@ Check: `git log origin/main..origin/aws-ec2-rds-migration --oneline` lists this 
   - **Check:** `select version_num from alembic_version` is `0002_project_category`.
   - **Undo:** As `career_admin`, `DROP SCHEMA public CASCADE; CREATE SCHEMA public;`, then restore again.
 
-- [ ] **Step 3: Create the read-only app role**
+- [x] **Step 3: Create the read-only app role**
   - **Run:** From the laptop, pipe the SQL over SSH into `psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f -` (migrate.env loaded on the server), so the password travels only inside SSH. The SQL is built from `~/.config/career-platform/rds-app-password`:
     ```sql
     CREATE ROLE career_app LOGIN PASSWORD '<app pw>';
@@ -423,7 +423,7 @@ Check: `git log origin/main..origin/aws-ec2-rds-migration --oneline` lists this 
   - **Check:** With app.env loaded (`sudo -u career-app` or `sudo cat`): `select count(*) from projects` works, and `delete from tags` fails with `permission denied`.
   - **Undo:** `DROP OWNED BY career_app; DROP ROLE career_app;`
 
-- [ ] **Step 4: Prove the data matches Railway, then remove the server copy**
+- [x] **Step 4: Prove the data matches Railway, then remove the server copy**
   - **Run:** Run this query on Railway (`railway ssh -s Postgres` → `psql -At`) and on RDS (EC2, migrate.env). Save the outputs as `backups/checksums-railway.txt` and `backups/checksums-rds.txt` on the laptop, then `diff` them:
     ```sql
     SELECT 'profiles', count(*), md5(coalesce(string_agg(t::text, '|' ORDER BY t::text), '')) FROM profiles t
@@ -438,9 +438,15 @@ Check: `git log origin/main..origin/aws-ec2-rds-migration --oneline` lists this 
     - `ls ~/railway.dump` on the server says no such file.
   - **Undo:** Read-only.
 
+> **Executed 2026-11-09: complete, with a different data source.** The career-platform app is gone from Railway: the site and `tmbs117o.up.railway.app` return `404 Application not found`, and the Railway login only sees `traceability-db`. With the user's approval, the source is **`backups/railway-postgres-20261029T215819Z.dump`** (sha256 `88a08d55…`, 8 `TABLE DATA` entries) instead of a fresh dump. Content edits made after 2026-10-29, if any, aren't in it.
+> - Step 1: replaced by the Oct 29 dump. The dump attempts first hit the wrong project and needed a Railway SSH key (see the migration notes).
+> - Step 2: the sha256 matched on EC2. RDS had 0 tables beforehand. `pg_restore` exited 0, and `alembic_version` is `0002_project_category`.
+> - Step 3: the role was created. `career_app` counts 13 projects, and `delete from tags` gets `permission denied`.
+> - Step 4: RDS is compared with **the dump restored into a temporary local Postgres 18**, not with Railway. The query sorts with `COLLATE "C"` and both outputs are put through `LC_ALL=C sort`. `diff` is empty (`backups/checksums-dump.txt` and `backups/checksums-rds.txt`). Counts: profiles 1, experiences 2, education 2, **skills 13** (the plan said 12, but the dump has 13), tags 13, projects 13, project_tags 27. The server's copy was shredded.
+
 ## 6. Run the app
 
-- [ ] **Step 1: Install the unit and nginx site, then deploy**
+- [x] **Step 1: Install the unit and nginx site, then deploy**
   - **Run:**
     ```bash
     sudo cp /opt/career-platform/deploy/aws/career-platform.service /etc/systemd/system/
@@ -458,6 +464,11 @@ Check: `git log origin/main..origin/aws-ec2-rds-migration --oneline` lists this 
     - `free -m` leaves headroom on the 1 GiB instance. Record it.
     - `curl -s -H 'Host: aws.elliemcgough.me' http://<EIP>/health` from the laptop is `{"status":"ok"}`.
   - **Undo:** `sudo systemctl disable --now career-platform`, remove the unit and the site link, restore the `default` link, and reload nginx.
+
+> **Executed 2026-11-09: complete.**
+> - `nginx -t` passed. `deploy.sh` exited 0 and printed `deployed ceaf1ed: /health ok, /about 200`, and Alembic made no changes.
+> - uvicorn listens only on `127.0.0.1:8000` and runs as `career-app`. `free -m` shows 908 MB total and 397 MB available.
+> - From the laptop, with `Host: aws.elliemcgough.me`: `/health` returns `{"status":"ok"}`, and `/` returns 307 to `/about`. `/about`, `/contact`, `/portfolio`, `/privacy`, `/resume` and `/projects/1` all return 200 without the snapshot marker, so they're served from RDS.
 
 ## 7. Verify on the test subdomain `aws.elliemcgough.me` (course guide, section 10)
 
