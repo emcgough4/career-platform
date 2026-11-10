@@ -488,7 +488,7 @@ Railway keeps serving `elliemcgough.me` throughout this section.
 > - The zone went from 10 records to 11. A before-and-after diff of all record fields shows nothing removed or changed, and the only addition is this one.
 > - The record resolves to the Elastic IP on 1.1.1.1, 8.8.8.8 and Cloudflare's authoritative server. `http://aws.elliemcgough.me/health` returns `{"status":"ok"}`.
 
-- [ ] **Step 2: Certificate for the test name**
+- [x] **Step 2: Certificate for the test name**
   - **Where:** server
   - **Run:**
     1. `sudo certbot certonly --nginx -d aws.elliemcgough.me --dry-run`
@@ -500,6 +500,16 @@ Railway keeps serving `elliemcgough.me` throughout this section.
     - `https://aws.elliemcgough.me` shows the padlock in the browser.
     - `sudo certbot renew --dry-run` succeeds.
   - **Undo:** `sudo certbot delete --cert-name aws.elliemcgough.me`, then copy the plain port-80 config back.
+
+> **Executed 2026-11-09 (Step 2):**
+> - The staging dry run passed. The real certificate is issued by Let's Encrypt `YE1`, with CN `aws.elliemcgough.me`, and expires 2027-02-08. It was registered without an email (see the migration notes), and `--redirect` added the HTTP→HTTPS redirect.
+> - `nginx -t` passes, and `git status` on the server is empty.
+> - Checks:
+>   - `http://…/about` returns 301 to `https://…/about`.
+>   - Over HTTPS, `/health` returns 200 and `/` returns 307 to `/about`.
+>   - `/about`, `/contact`, `/portfolio`, `/privacy`, `/resume` and `/projects/1` all return 200.
+>   - curl verifies the certificate (`ssl_verify_result` 0).
+> - `certbot.timer` is active, and `sudo certbot renew --dry-run` reports "all simulated renewals succeeded".
 
 - [ ] **Step 3: Every page matches Railway**
   - **Where:** laptop
