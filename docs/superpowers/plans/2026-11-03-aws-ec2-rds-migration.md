@@ -595,10 +595,19 @@ Gate: Section 7 all passed. Not required during class, but it must happen before
 
 ## 9. After cutover: merge, document (course guide, sections 11–12)
 
-- [ ] **Step 1: Merge to `main` and run `main` on the server**
+- [x] **Step 1: Merge to `main` and run `main` on the server**
   - **Run:** Change `deploy.sh`'s default ref to `origin/main` and commit. Merge `aws-ec2-rds-migration` into `main` and push (ask first). On the server, run `deploy.sh origin/main`. Then delete the branch locally and on GitHub.
   - **Why:** Once the domain points at AWS, Railway no longer serves anything that matters, so its redeploy from `main` is harmless.
   - **Check:** The site still loads at `https://elliemcgough.me` with no fallback marker. `git -C /opt/career-platform rev-parse --short HEAD` matches `origin/main`.
+
+> **Executed 2026-11-09: merged and deployed. The branch hasn't been deleted yet.**
+> - `deploy.sh` now defaults to `origin/main` (`8abcb10`), backed by a new test, `test_deploy_script_defaults_to_main`, which failed first and then passed. The suite is 56 passed.
+> - A pre-push scan of `main..branch` found no passwords, no IP address, and no keys or credentialed URLs.
+> - The merge commit is `5e3bb00` (`--no-ff`) and was pushed to `origin/main`.
+> - On the server, `deploy.sh origin/main` printed `deployed 5e3bb00: /health ok, /about 200`, and Alembic made no changes. The server's HEAD is `5e3bb00`, the same as `origin/main`, and `git status` is clean.
+> - `https://elliemcgough.me`: every page returns 200, `/no-such-page` returns 404, and the marker count is 0, via `52.71.186.61`.
+> - Railway has nothing left to redeploy from `main`, because the app no longer exists.
+> - **Not done:** deleting `aws-ec2-rds-migration` locally and on GitHub (waiting for the user's go-ahead).
 
 - [ ] **Step 2: README**
   - **Run:** Update the README for the move, with a Mermaid architecture diagram:
