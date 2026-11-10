@@ -511,7 +511,7 @@ Railway keeps serving `elliemcgough.me` throughout this section.
 >   - curl verifies the certificate (`ssl_verify_result` 0).
 > - `certbot.timer` is active, and `sudo certbot renew --dry-run` reports "all simulated renewals succeeded".
 
-- [ ] **Step 3: Every page matches Railway**
+- [x] **Step 3: Every page matches Railway**
   - **Where:** laptop
   - **Run:** For `/about /resume /portfolio /contact /privacy /no-such-page` plus `/projects/<id>` for every id in `select id from projects`:
     - Fetch the page from `https://elliemcgough.me` (Railway) and from `https://aws.elliemcgough.me` (EC2).
@@ -525,7 +525,7 @@ Railway keeps serving `elliemcgough.me` throughout this section.
     - `curl -sI http://aws.elliemcgough.me/` gives `301` to HTTPS.
   - **Undo:** Read-only.
 
-- [ ] **Step 4: Database outage gives a fast 503, then recovers** (closes the Project 1 gap "never triggered live")
+- [x] **Step 4: Database outage gives a fast 503, then recovers** (closes the Project 1 gap "never triggered live")
   - **Run:**
     1. Revoke the `career-platform-db` 5432 rule. Then `sudo systemctl restart career-platform` (existing connections survive a security group change).
     2. Time `curl -s -o /dev/null -w '%{http_code} %{time_total}\n' https://aws.elliemcgough.me/about`.
@@ -535,8 +535,13 @@ Railway keeps serving `elliemcgough.me` throughout this section.
     - After re-authorizing: `200` with the marker absent.
   - **Undo:** Re-authorize the rule (Section 3 Step 2).
 
-- [ ] **Step 5: Record the tests**
+- [x] **Step 5: Record the tests**
   - **Run:** Write `docs/evidence/aws-test-subdomain.md` with what was tested, the commands and output, and what is still unverified.
+
+> **Executed 2026-11-09 (Steps 3–5):** the evidence is in `docs/evidence/aws-test-subdomain.md`.
+> - Step 3: the baseline was **the same commit on the laptop, run against a local Postgres 18 restored from the same dump**, because the Railway app no longer exists. 19 of 19 pages have no diff. `/no-such-page` returns 404 on both sides and the other pages 200, and the marker count is 0 everywhere. `og:image` is `https://aws.elliemcgough.me/…`, and HTTP returns 301 to HTTPS. I also checked that all 18 static files return 200.
+> - Step 4: during the outage, three requests each returned `503` in about 5.3 s with the marker. After re-authorizing (no restart), they returned `200` with no marker. The rule was restored with the same content and a new rule ID.
+> - Extra checks: port 8000 and RDS aren't reachable from the internet, only TLS 1.2 and 1.3 are accepted, a spoofed `X-Forwarded-Proto` is ignored, and the app logged no errors. Findings and what wasn't verified are listed in the evidence file.
 
 ## 8. Cut the domain over to EC2 (course guide, section 11)
 
