@@ -199,7 +199,7 @@ Expected: FAIL, with stderr containing `invalid interpolation syntax`.
 Run: `uv run pytest -q`
 Expected: all pass.
 
-- [ ] **Step 5: Commit, then push the branch (ask first)**
+- [x] **Step 5: Commit, then push the branch (ask first)**
 
 ```bash
 git add alembic/env.py .env.example tests/test_alembic_env.py tests/test_config.py
@@ -211,6 +211,7 @@ Check: `git log origin/main..origin/aws-ec2-rds-migration --oneline` lists this 
 > **Executed 2026-11-05: complete (`e1010c2`).** Followed the plan as written.
 > - The test failed first with `ValueError: invalid interpolation syntax … at position 24`. After the `%%` escape, the suite was 55 passed.
 > - `alembic current` against the local SQLite file still prints `0002_project_category (head)`.
+> - Pushed 2026-11-05 with the user's approval (branch head `ceaf1ed`). `origin/main` didn't move and Railway made no new deployment.
 
 ## 3. AWS resources (laptop, AWS CLI)
 
@@ -336,7 +337,7 @@ Check: `git log origin/main..origin/aws-ec2-rds-migration --oneline` lists this 
 
 ## 4. Server setup (SSH as `ubuntu`)
 
-- [ ] **Step 1: Packages, app user, uv**
+- [x] **Step 1: Packages, app user, uv**
   - **Run:**
     ```bash
     sudo apt-get update && sudo apt-get -y upgrade
@@ -353,7 +354,7 @@ Check: `git log origin/main..origin/aws-ec2-rds-migration --oneline` lists this 
     - `nginx -v` and `certbot --version` print versions.
   - **Undo:** `sudo userdel career-app`. The packages can stay.
 
-- [ ] **Step 2: Clone the branch and fetch the RDS CA bundle**
+- [x] **Step 2: Clone the branch and fetch the RDS CA bundle**
   - **Run:**
     ```bash
     sudo install -d -o ubuntu -g ubuntu -m 755 /opt/career-platform
@@ -363,7 +364,7 @@ Check: `git log origin/main..origin/aws-ec2-rds-migration --oneline` lists this 
   - **Check:** `git -C /opt/career-platform log -1 --oneline` matches the laptop's branch head. `grep -c 'BEGIN CERTIFICATE' /etc/ssl/certs/rds-global-bundle.pem` is > 1.
   - **Undo:** `sudo rm -rf /opt/career-platform /etc/ssl/certs/rds-global-bundle.pem`
 
-- [ ] **Step 3: Python environment from the lock file and the system Python**
+- [x] **Step 3: Python environment from the lock file and the system Python**
   - **Run:** `cd /opt/career-platform && UV_PYTHON=/usr/bin/python3 UV_PYTHON_PREFERENCE=only-system uv sync --locked && uv run --no-sync pytest -q`
   - **Check:**
     - `readlink -f .venv/bin/python` starts with `/usr/bin/python3`.
@@ -371,9 +372,9 @@ Check: `git log origin/main..origin/aws-ec2-rds-migration --oneline` lists this 
     - `sudo -u career-app /opt/career-platform/.venv/bin/python -c 'import app.main'` exits 0.
   - **Undo:** `rm -rf .venv`
 
-- [ ] **Step 4: Env files** (from the laptop, so passwords never appear in a terminal transcript)
+- [x] **Step 4: Env files** (from the laptop, so passwords never appear in a terminal transcript)
   - **Run:** Build two files in the scratchpad (mode 600) and pipe each over SSH into `sudo install`:
-    - `app.env`: `DATABASE_URL=postgresql://career_app:<app pw>@<RDS_HOST>:5432/career_platform?sslmode=verify-full&sslrootcert=/etc/ssl/certs/rds-global-bundle.pem&connect_timeout=5`
+    - `app.env`: `DATABASE_URL='postgresql://career_app:<app pw>@<RDS_HOST>:5432/career_platform?sslmode=verify-full&sslrootcert=/etc/ssl/certs/rds-global-bundle.pem&connect_timeout=5'`, with the value **in single quotes**, because `deploy.sh` loads the file with `.` and an unquoted `&` would end the assignment. The password is percent-encoded.
     - `migrate.env`: the same URL with `career_admin` and the master password.
 
     On the server: `sudo install -d -m 755 /etc/career-platform`. Install `app.env` with `-o root -g career-app -m 640` and `migrate.env` with `-o ubuntu -g ubuntu -m 600`. Then delete the scratchpad copies.
@@ -382,6 +383,13 @@ Check: `git log origin/main..origin/aws-ec2-rds-migration --oneline` lists this 
     - `sudo -u career-app test -r /etc/career-platform/app.env && echo ok` prints `ok`.
     - `(set -a; . /etc/career-platform/migrate.env; psql "$DATABASE_URL" -Atc 'select version(), ssl from pg_stat_ssl where pid = pg_backend_pid()')` prints `PostgreSQL 18.6…|t`, which proves verify-full TLS from EC2.
   - **Undo:** `sudo rm -rf /etc/career-platform`
+
+> **Executed 2026-11-09: complete.**
+> - SSH needed a new port 22 rule: the public IP had changed on the same network, so `laptop-2026-11-03` was replaced with `laptop-2026-11-09`.
+> - Step 1: `pg_restore` 18.6, Python 3.14.4, uv 0.12.19, nginx 1.28.3, certbot 4.0.0. No reboot was needed.
+> - Step 2: the server is on `ceaf1ed`, the pushed branch head. 114 CA certificates.
+> - Step 3: 55 passed on Python 3.14.4. The venv points to `/usr/bin/python3.14`, and `career-app` can import `app.main`. `uv run` warns that `.python-version` asks for 3.12; this is harmless, because systemd and `deploy.sh` call `.venv/bin` directly.
+> - Step 4: the URL values had to be single-quoted, and the files were written with `install -m … /dev/null` followed by `sudo tee`, piped from the laptop with no scratchpad copy (see the migration notes). The checks show `18.6|t` (verify-full TLS from EC2), `career-app` can't read `migrate.env`, and systemd parses `app.env`.
 
 ## 5. Data: Railway → RDS, restored from EC2
 
