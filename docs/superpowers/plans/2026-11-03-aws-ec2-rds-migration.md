@@ -547,17 +547,17 @@ Railway keeps serving `elliemcgough.me` throughout this section.
 
 Gate: Section 7 all passed. Not required during class, but it must happen before the Railway trial ends. This changes what the public sees, so **ask the user before Step 2.** Expected outage: from the DNS change until Certbot finishes, usually under 10 minutes.
 
-- [ ] **Step 1: Last data check**
+- [x] **Step 1: Last data check**
   - **Run:** Rerun Section 5 Step 4's checksum query.
   - **Check:** No diff. If Railway content changed, repeat Section 5 first.
 
-- [ ] **Step 2: Point the apex at the Elastic IP**
+- [x] **Step 2: Point the apex at the Elastic IP**
   - **Where:** `cf` CLI or the Cloudflare dashboard
   - **Run:** Replace the `elliemcgough.me` CNAME (`tmbs117o.up.railway.app`) with an **A record to `<EIP>`, DNS only**, TTL Auto. **Do not touch** `www`, the redirect rule, `_railway-verify`, `aws`, MX or any TXT records.
   - **Check:** `nslookup elliemcgough.me` and `dig +short elliemcgough.me @8.8.8.8` both print `<EIP>`.
   - **Undo:** Put back the CNAME to `tmbs117o.up.railway.app`, DNS only. Railway is unchanged and still has the custom domain.
 
-- [ ] **Step 3: Add the apex to the certificate**
+- [x] **Step 3: Add the apex to the certificate**
   - **Where:** server
   - **Run:**
     1. `sudo certbot certonly --nginx --cert-name aws.elliemcgough.me -d aws.elliemcgough.me -d elliemcgough.me --dry-run`
@@ -568,7 +568,7 @@ Gate: Section 7 all passed. Not required during class, but it must happen before
   - **Check:** `sudo nginx -t` passes. `git -C /opt/career-platform status --short` is empty.
   - **Undo:** Re-issue for `aws.elliemcgough.me` alone.
 
-- [ ] **Step 4: Check the real domain is on EC2**
+- [x] **Step 4: Check the real domain is on EC2**
   - **Where:** laptop
   - **Run and check:**
     - `curl -sI https://elliemcgough.me/about` shows a 200 and `server: nginx`.
@@ -580,6 +580,18 @@ Gate: Section 7 all passed. Not required during class, but it must happen before
     - The padlock shows in the browser.
   - The content freeze ends here. Record everything in `docs/evidence/aws-cutover.md`.
   - **Undo:** Section 8 Step 2's undo. The app doesn't write, but if any content was edited on RDS after cutover, copy it back to Railway before rolling back (course guide, section 11).
+
+> **Executed 2026-11-09, 04:24–04:27 UTC: complete.** Evidence is in `docs/evidence/aws-cutover.md`.
+> - **Starting point:** the site was already returning Railway's 404, so the cutover brought it back.
+> - **Step 1:** RDS matches the checksums from the restore.
+> - **Step 2:** the root-domain record was changed in place from CNAME to A `52.71.186.61`, DNS only. The zone diff shows that's the only change.
+> - **Step 3:** the dry run passed, the certificate was expanded (Let's Encrypt `YE2`, SANs `aws.elliemcgough.me` and `elliemcgough.me`), and `certbot install --redirect` ran. `nginx -t` passes and `git status` on the server is clean.
+> - **Step 4:**
+>   - `https://elliemcgough.me/about` returns 200 via `52.71.186.61`.
+>   - HTTP returns 301 to HTTPS, and `www` returns 301 to the root domain.
+>   - `og:image` is `https://elliemcgough.me/…`, and the marker count is 0.
+>   - The `curl -sI` check gives 405, because `HEAD` isn't supported (known finding), so the 200 check uses GET.
+>   - Not yet checked: the padlock in a browser.
 
 ## 9. After cutover: merge, document (course guide, sections 11–12)
 

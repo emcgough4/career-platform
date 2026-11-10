@@ -40,3 +40,11 @@ Deviations from the plan in [`docs/superpowers/plans/2026-11-03-aws-ec2-rds-migr
 - **Section 7 Step 2 (the certificate): the Let's Encrypt account was registered without an email** (`--register-unsafely-without-email`), instead of the plan's `-m <your email>`. Let's Encrypt stopped sending expiry emails in 2025, and `certbot.timer` renews automatically, so an email would add nothing and would share my address with another service. To add one later: `sudo certbot update_account -m <email>`.
 - **What Certbot's redirect means for the other name:** the port 80 server block now returns 301 to HTTPS for `aws.elliemcgough.me` and **404** for any other host, including `elliemcgough.me` and the bare IP. That's harmless while the root domain points at Railway, and Section 8 adds `elliemcgough.me` to the certificate at cutover.
 - **Section 7 Steps 3–5 (testing the test subdomain): the baseline for the page comparison changed.** The plan compared with Railway, which no longer exists. Instead, I compared with the same commit running on the laptop against the same dump, and all 19 pages were identical. The DB outage test went as planned (503 in about 5.3 s, then recovery without a restart). I added checks the plan didn't have: static files, network exposure, TLS versions and a spoofed header. Everything is in `docs/evidence/aws-test-subdomain.md`, including findings (`HEAD` returns 405, no HSTS) and a list of what isn't verified.
+- **Section 8 (cutover) is done, 2026-11-09 04:24–04:27 UTC.** `https://elliemcgough.me` is served by EC2 and RDS again. Before this, it had been returning Railway's 404. Differences from the plan:
+  - Step 1 compared RDS with the checksums from the restore, because Railway is gone.
+  - The root-domain CNAME was changed to an A record **in place** (one PATCH), so there was never a moment without a record.
+  - The `curl -sI … 200` check gets 405 because `HEAD` isn't supported, so I used GET.
+  - `certbot install` ran with `--redirect --non-interactive`.
+  - The plan's rollback (going back to Railway's CNAME) no longer works.
+
+  The evidence is in `docs/evidence/aws-cutover.md`.
