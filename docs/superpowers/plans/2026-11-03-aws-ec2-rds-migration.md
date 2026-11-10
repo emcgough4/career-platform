@@ -609,7 +609,7 @@ Gate: Section 7 all passed. Not required during class, but it must happen before
 > - Railway has nothing left to redeploy from `main`, because the app no longer exists.
 > - **Not done:** deleting `aws-ec2-rds-migration` locally and on GitHub (waiting for the user's go-ahead).
 
-- [ ] **Step 2: README**
+- [x] **Step 2: README**
   - **Run:** Update the README for the move, with a Mermaid architecture diagram:
     - Cloudflare DNS → nginx (HTTPS ends here) → uvicorn on loopback → RDS in the VPC, with its 1-day backups.
     - SSH as the only admin path.
@@ -623,6 +623,12 @@ Gate: Section 7 all passed. Not required during class, but it must happen before
     - what's next
 
     No passwords, keys or exports. Every arrow in the diagram matches the deployment.
+
+> **Executed 2026-11-09 (Step 2):**
+> - **New in the README:** "How it runs" for AWS, a Mermaid diagram "Now: AWS EC2 and RDS" (Cloudflare → web security group → nginx → uvicorn on loopback → database security group → RDS → 1-day backups, with SSH from the laptop's /32 as the only admin path, deploy.sh pulling from GitHub, and GA4 straight from the browser), and "Migration from Railway to AWS" (which architecture and why, how the data moved, backups and restore, what was tested and the results, cutover, who manages what).
+> - **Rewritten:** Rollback, Limitations, Costs (about $26.82/month on the Free plan's credits), Deploy, Dependencies and Edit content. Added a "What's next" checklist for the unfinished items.
+> - **Kept as history:** the Railway and Azure sections.
+> - **Checks:** the README has no passwords, laptop IP or account ID. The diagram's arrows all point at defined nodes and every subgraph is closed. It wasn't rendered locally, because downloading the Mermaid CLI wasn't allowed; GitHub renders it on push.
 
 - **Later (not this plan):**
   - Retire Railway: remove the custom domain and `_railway-verify`, then shut down the service and its database. Do it before the trial ends, and after a few days on AWS.

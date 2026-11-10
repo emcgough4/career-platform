@@ -49,3 +49,4 @@ Deviations from the plan in [`docs/superpowers/plans/2026-11-03-aws-ec2-rds-migr
 
   The evidence is in `docs/evidence/aws-cutover.md`.
 - **Section 9 Step 1: merged to `main` and deployed `main`.** `deploy.sh` now defaults to `origin/main`, with a test. `5e3bb00` is on GitHub and running on the server, and the live site checks pass. The branch isn't deleted yet, which is a deviation from the plan, pending my go-ahead. The README update (Step 2) hasn't been done.
+- **README updated for AWS (Section 9 Step 2).** The Mermaid architecture diagram wasn't rendered locally, because fetching the Mermaid CLI with `npx` was blocked; I checked its structure instead. The Railway and Azure sections are kept as history.
