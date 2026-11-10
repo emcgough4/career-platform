@@ -48,3 +48,8 @@ def test_deploy_script_syncs_then_migrates_as_owner_then_restarts_then_checks():
 
 def test_deploy_script_is_executable():
     assert os.access(DEPLOY / "deploy.sh", os.X_OK)
+
+
+def test_deploy_script_defaults_to_main():
+    # After cutover the server runs main; an explicit ref (e.g. a known-good commit) still overrides it.
+    assert 'ref="${1:-origin/main}"' in read("deploy.sh").splitlines()

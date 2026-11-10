@@ -2,7 +2,7 @@
 set -euo pipefail
 # Deploy a commit on the EC2 server. Run as ubuntu: deploy/aws/deploy.sh [git-ref]
 
-ref="${1:-origin/aws-ec2-rds-migration}"
+ref="${1:-origin/main}"
 cd /opt/career-platform
 git fetch origin
 git checkout --detach "$ref"
