@@ -474,7 +474,7 @@ Check: `git log origin/main..origin/aws-ec2-rds-migration --oneline` lists this 
 
 Railway keeps serving `elliemcgough.me` throughout this section.
 
-- [ ] **Step 1: DNS record for the test name**
+- [x] **Step 1: DNS record for the test name**
   - **Where:** laptop, `cf` CLI
   - **Run:** Add an A record `aws` → `<EIP>`, **DNS only**, TTL Auto. Change no other record.
   - **Check:**
@@ -482,6 +482,11 @@ Railway keeps serving `elliemcgough.me` throughout this section.
     - `cf dns records list --zone elliemcgough.me` shows every other record unchanged from `docs/evidence/dns-https-final.md`.
     - In the Cloudflare dashboard, the new record has the grey cloud.
   - **Undo:** Delete the `aws` A record.
+
+> **Executed 2026-11-09 (Step 1 only):**
+> - Created with `cf dns records create -z elliemcgough.me --body …`: A `aws.elliemcgough.me` → `52.71.186.61`, `proxied: false`, TTL Auto. The record ID is `84c2c106…`, and its comment notes the migration.
+> - The zone went from 10 records to 11. A before-and-after diff of all record fields shows nothing removed or changed, and the only addition is this one.
+> - The record resolves to the Elastic IP on 1.1.1.1, 8.8.8.8 and Cloudflare's authoritative server. `http://aws.elliemcgough.me/health` returns `{"status":"ok"}`.
 
 - [ ] **Step 2: Certificate for the test name**
   - **Where:** server
