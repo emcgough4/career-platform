@@ -439,11 +439,11 @@ If that isn't enough, use RDS point-in-time restore (within 1 day) or a dump fro
 | Data out (under 100 GB/month free) | $0.00 |
 | **Total** | **about $26.82** |
 
-The AWS account is on the **Free plan: $100 in credits for 6 months**, which at this rate lasts about 113 days. Stopping the instance still bills the Elastic IP and the disks, and a stopped RDS database restarts itself after 7 days.
+The AWS account is on the **Free plan, with $140.00 in credits** (account owner's Credits page, 2026-11-09). By then $5.26 had been used, which matches the estimate for the 6 days since 2026-11-03. At this rate the remaining $134.74 lasts about 5 months. Stopping the instance still bills the Elastic IP and the disks, and a stopped RDS database restarts itself after 7 days.
 
 | Service | What it runs | Plan or credit | Ends or renews | Cleanup plan |
 | --- | --- | --- | --- | --- |
-| AWS | EC2, RDS, Elastic IP | Free plan, $100 credits | When the credits or the 6 months run out, whichever comes first | At the end of the course, follow the teardown in plan Section 10: final snapshot, delete RDS, terminate EC2, release the Elastic IP, delete the security groups and key pair, and remove the Cloudflare records |
+| AWS | EC2, RDS, Elastic IP | Free plan, $140 credits | When the credits or the 6 months run out, whichever comes first | At the end of the course, follow the teardown in plan Section 10: final snapshot, delete RDS, terminate EC2, release the Elastic IP, delete the security groups and key pair, and remove the Cloudflare records |
 | Railway | Nothing for this site (checked 2026-11-09: the career-platform app is gone) | Trial | About Nov 6–7, 2026 | Remove the `_railway-verify` TXT record and the SSH keys registered with Railway (`isba4775_azure`, and `railway-cli-career-platform` from 2026-11-09). The `traceability-db` project is a different app; leave it alone. |
 | Azure for Students | `vm-career-platform` and its resource group (stopped) | $100 credit | Subscription expires Sep 22, 2027 | Delete `rg-career-platform` when the instructor's cleanup directions say so |
 | Namecheap | `elliemcgough.me` registration | Free first year | Expires Oct 1, 2027 | Decide before then whether to renew |
